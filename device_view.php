@@ -96,14 +96,14 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
                         </tr>
                         <tr>
                             <th>Registered:</th>
-                            <td><?php echo date('Y-m-d H:i:s', strtotime($device['registered_at'])); ?></td>
+                            <td><?php echo date('d/m/Y H:i:s', strtotime($device['registered_at'])); ?></td>
                         </tr>
                         <tr>
                             <th>Last Seen:</th>
                             <td>
                                 <?php 
                                 if ($device['last_seen']) {
-                                    echo date('Y-m-d H:i:s', strtotime($device['last_seen']));
+                                    echo date('d/m/Y H:i:s', strtotime($device['last_seen']));
                                     $diff = time() - strtotime($device['last_seen']);
                                     if ($diff < 3600) {
                                         echo ' (' . floor($diff / 60) . ' minutes ago)';
@@ -174,7 +174,7 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
                                     
                                     const infoWindow = new google.maps.InfoWindow({
                                         content: '<div><strong><?php echo htmlspecialchars($device['display_name']); ?></strong><br>' +
-                                                'Last updated: <?php echo date('Y-m-d H:i:s', strtotime($latestLocation['created_at'])); ?><br>' +
+                                                'Last updated: <?php echo date('d/m/Y H:i:s', strtotime($latestLocation['created_at'])); ?><br>' +
                                                 'Accuracy: <?php echo $latestLocation['accuracy'] ?? 'N/A'; ?>m</div>'
                                     });
                                     
@@ -216,7 +216,7 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
                                 <tbody>
                                     <?php foreach ($locations as $loc): ?>
                                         <tr>
-                                            <td><?php echo date('Y-m-d H:i:s', strtotime($loc['created_at'])); ?></td>
+                                            <td><?php echo date('d/m/Y H:i:s', strtotime($loc['created_at'])); ?></td>
                                             <td><?php echo htmlspecialchars($loc['lat']); ?></td>
                                             <td><?php echo htmlspecialchars($loc['lon']); ?></td>
                                             <td><?php echo $loc['accuracy'] ? htmlspecialchars($loc['accuracy']) . 'm' : 'N/A'; ?></td>

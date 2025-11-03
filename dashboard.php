@@ -124,7 +124,7 @@ $stats = db()->fetchOne(
                             <div class="device-info">
                                 <p><strong>Owner:</strong> <?php echo htmlspecialchars($device['owner_name']); ?></p>
                                 <p><strong>UUID:</strong> <code><?php echo htmlspecialchars($device['device_uuid']); ?></code></p>
-                                <p><strong>Registered:</strong> <?php echo date('M j, Y', strtotime($device['registered_at'])); ?></p>
+                                <p><strong>Registered:</strong> <?php echo date('d/m/Y', strtotime($device['registered_at'])); ?></p>
                                 <p><strong>Last Seen:</strong> 
                                     <?php 
                                     if ($device['last_seen']) {
@@ -136,7 +136,7 @@ $stats = db()->fetchOne(
                                         } elseif ($diff < 86400) {
                                             echo floor($diff / 3600) . ' hours ago';
                                         } else {
-                                            echo date('M j, Y', strtotime($device['last_seen']));
+                                            echo date('d/m/Y H:i', strtotime($device['last_seen']));
                                         }
                                     } else {
                                         echo 'Never';

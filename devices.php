@@ -111,11 +111,11 @@ $devices = db()->fetchAll(
                                     <td><?php echo htmlspecialchars($device['display_name']); ?></td>
                                     <td><?php echo htmlspecialchars($device['owner_name']); ?></td>
                                     <td><code><?php echo htmlspecialchars(substr($device['device_uuid'], 0, 8)); ?>...</code></td>
-                                    <td><?php echo date('Y-m-d H:i', strtotime($device['registered_at'])); ?></td>
+                                    <td><?php echo date('d/m/Y H:i', strtotime($device['registered_at'])); ?></td>
                                     <td>
                                         <?php 
                                         if ($device['last_seen']) {
-                                            echo date('Y-m-d H:i', strtotime($device['last_seen']));
+                                            echo date('d/m/Y H:i', strtotime($device['last_seen']));
                                         } else {
                                             echo 'Never';
                                         }
