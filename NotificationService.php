@@ -56,13 +56,9 @@ class NotificationService {
      * For production, use SMTP library like PHPMailer or SwiftMailer
      */
     private static function sendEmail($to, $subject, $body) {
-        $headers = [
-            'From: PhoneMonitor <' . (getenv('ADMIN_EMAIL') ?: 'noreply@localhost') . '>',
-            'Reply-To: ' . (getenv('ADMIN_EMAIL') ?: 'noreply@localhost'),
-            'X-Mailer: PHP/' . phpversion(),
-            'Content-Type: text/html; charset=UTF-8'
-        ];
-        
+        $fromEmail = getenv('SMTP_FROM_EMAIL') ?: (getenv('ADMIN_EMAIL') ?: 'noreply@localhost');
+        $fromName  = getenv('SMTP_FROM_NAME') ?: 'PhoneMonitor';
+
         $htmlBody = "
         <!DOCTYPE html>
         <html>
@@ -91,8 +87,113 @@ class NotificationService {
             </div>
         </body>
         </html>";
-        
+
+        // If SMTP settings are present, use direct SMTP. Otherwise, fallback to PHP mail().
+        $smtpHost = getenv('SMTP_HOST') ?: '';
+        if (!empty($smtpHost)) {
+            $smtpPort   = (int)(getenv('SMTP_PORT') ?: 465);
+            $smtpUser   = getenv('SMTP_USERNAME') ?: '';
+            $smtpPass   = getenv('SMTP_PASSWORD') ?: '';
+            $smtpSecure = strtolower(getenv('SMTP_SECURE') ?: 'ssl'); // ssl or tls
+            return self::sendViaSmtp($to, $subject, $htmlBody, $fromEmail, $fromName, $smtpHost, $smtpPort, $smtpUser, $smtpPass, $smtpSecure);
+        }
+
+        $headers = [
+            'From: ' . self::formatAddress($fromEmail, $fromName),
+            'Reply-To: ' . $fromEmail,
+            'X-Mailer: PHP/' . phpversion(),
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8'
+        ];
         return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+    }
+
+    private static function formatAddress($email, $name) {
+        $name = trim($name);
+        if ($name === '') return $email;
+        return sprintf('%s <%s>', $name, $email);
+    }
+
+    private static function sendViaSmtp($to, $subject, $htmlBody, $fromEmail, $fromName, $host, $port, $username, $password, $secure) {
+        $timeout = 30;
+        $remote = ($secure === 'ssl') ? "ssl://{$host}:{$port}" : "{$host}:{$port}";
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'allow_self_signed' => false,
+            ],
+        ]);
+
+        $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $context);
+        if (!$fp) {
+            throw new Exception("SMTP connection failed: {$errstr} ({$errno})");
+        }
+        stream_set_timeout($fp, $timeout);
+
+        $expect = function($code) use ($fp) {
+            $resp = '';
+            while ($line = fgets($fp)) {
+                $resp .= $line;
+                // Response lines have status code + space for final line
+                if (preg_match('/^\d{3} /', $line)) break;
+            }
+            if (strpos($resp, (string)$code) !== 0) {
+                throw new Exception("SMTP unexpected response (wanted {$code}): {$resp}");
+            }
+            return $resp;
+        };
+
+        $send = function($cmd) use ($fp) {
+            fwrite($fp, $cmd . "\r\n");
+        };
+
+        $expect(220);
+        $send('EHLO phone-monitor');
+        $resp = $expect(250);
+
+        if ($secure === 'tls' && stripos($resp, 'STARTTLS') !== false) {
+            $send('STARTTLS');
+            $expect(220);
+            if (!stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                throw new Exception('SMTP STARTTLS negotiation failed');
+            }
+            $send('EHLO phone-monitor');
+            $expect(250);
+        }
+
+        if (!empty($username)) {
+            $send('AUTH LOGIN');
+            $expect(334);
+            $send(base64_encode($username));
+            $expect(334);
+            $send(base64_encode($password));
+            $expect(235);
+        }
+
+        $send('MAIL FROM: <' . $fromEmail . '>');
+        $expect(250);
+        $send('RCPT TO: <' . $to . '>');
+        $expect(250);
+        $send('DATA');
+        $expect(354);
+
+        $headers = [
+            'Date: ' . date('r'),
+            'From: ' . self::formatAddress($fromEmail, $fromName),
+            'Reply-To: ' . $fromEmail,
+            'To: ' . $to,
+            'Subject: ' . $subject,
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8',
+            'X-Mailer: PhoneMonitor'
+        ];
+        $data = implode("\r\n", $headers) . "\r\n\r\n" . $htmlBody . "\r\n.";
+        $send($data);
+        $expect(250);
+        $send('QUIT');
+        fclose($fp);
+        return true;
     }
     
     /**

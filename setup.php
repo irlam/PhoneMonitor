@@ -34,6 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'GOOGLE_MAPS_API_KEY' => trim($_POST['google_maps_key'] ?? ''),
                 'ADMIN_EMAIL' => trim($_POST['admin_email'] ?? ''),
                 'ASSET_VERSION' => trim($_POST['asset_version'] ?? '2'),
+                // SMTP settings (optional)
+                'SMTP_HOST' => trim($_POST['smtp_host'] ?? ''),
+                'SMTP_PORT' => trim($_POST['smtp_port'] ?? ''),
+                'SMTP_SECURE' => trim($_POST['smtp_secure'] ?? ''),
+                'SMTP_USERNAME' => trim($_POST['smtp_username'] ?? ''),
+                'SMTP_PASSWORD' => trim($_POST['smtp_password'] ?? ''),
+                'SMTP_FROM_EMAIL' => trim($_POST['smtp_from_email'] ?? ''),
+                'SMTP_FROM_NAME' => trim($_POST['smtp_from_name'] ?? ''),
             ];
             
             foreach ($updates as $key => $value) {
@@ -66,6 +74,7 @@ $status = [
     'env_writable' => is_writable(__DIR__ . '/.env'),
     'google_maps' => !empty(GOOGLE_MAPS_API_KEY),
     'admin_email' => !empty(getenv('ADMIN_EMAIL')),
+    'smtp_configured' => !empty(getenv('SMTP_HOST')),
     'geofences_table' => false,
     'notifications_table' => false,
 ];
@@ -218,6 +227,12 @@ $setupComplete = $status['database'] && $status['geofences_table'] && $status['n
                             </span>
                         </div>
                         <div>
+                            <strong>SMTP (optional):</strong> 
+                            <span class="status-badge <?php echo $status['smtp_configured'] ? 'status-ok' : 'status-warning'; ?>">
+                                <?php echo $status['smtp_configured'] ? '✓ Enabled' : '⚠ Not Enabled'; ?>
+                            </span>
+                        </div>
+                        <div>
                             <strong>Geofences:</strong> 
                             <span class="status-badge <?php echo $status['geofences_table'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['geofences_table'] ? '✓ Ready' : '⚠ Not Installed'; ?>
@@ -342,6 +357,60 @@ mysql -u your_user -p phone_monitor < database/migrations/003_geofences.sql
                                value="<?php echo htmlspecialchars(getenv('ADMIN_EMAIL') ?: ''); ?>" 
                                placeholder="admin@example.com">
                         <small>Email address for receiving alerts and reports</small>
+                    </div>
+
+                    <hr>
+                    <h4>SMTP (Optional, recommended)</h4>
+                    <p>Use your provider's SMTP to improve deliverability (example from your host: mxe97d.netcup.net, SSL/TLS on port 465).</p>
+                    <div class="form-group">
+                        <label for="smtp_host">SMTP Host</label>
+                        <input type="text" id="smtp_host" name="smtp_host" 
+                               value="<?php echo htmlspecialchars(getenv('SMTP_HOST') ?: ''); ?>" 
+                               placeholder="mxe97d.netcup.net">
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+                        <div>
+                            <label for="smtp_port">SMTP Port</label>
+                            <input type="number" id="smtp_port" name="smtp_port" 
+                                   value="<?php echo htmlspecialchars(getenv('SMTP_PORT') ?: '465'); ?>" 
+                                   placeholder="465">
+                        </div>
+                        <div>
+                            <label for="smtp_secure">Security</label>
+                            <select id="smtp_secure" name="smtp_secure" class="form-control">
+                                <?php $sec = strtolower(getenv('SMTP_SECURE') ?: 'ssl'); ?>
+                                <option value="ssl" <?php echo $sec==='ssl'?'selected':''; ?>>SSL (port 465)</option>
+                                <option value="tls" <?php echo $sec==='tls'?'selected':''; ?>>TLS (port 587)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+                        <div>
+                            <label for="smtp_username">SMTP Username</label>
+                            <input type="text" id="smtp_username" name="smtp_username" 
+                                   value="<?php echo htmlspecialchars(getenv('SMTP_USERNAME') ?: ''); ?>" 
+                                   placeholder="phone-monitor@defecttracker.uk">
+                        </div>
+                        <div>
+                            <label for="smtp_password">SMTP Password</label>
+                            <input type="password" id="smtp_password" name="smtp_password" 
+                                   value="<?php echo htmlspecialchars(getenv('SMTP_PASSWORD') ?: ''); ?>" 
+                                   placeholder="••••••••">
+                        </div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+                        <div>
+                            <label for="smtp_from_email">From Email</label>
+                            <input type="email" id="smtp_from_email" name="smtp_from_email" 
+                                   value="<?php echo htmlspecialchars(getenv('SMTP_FROM_EMAIL') ?: ''); ?>" 
+                                   placeholder="phone-monitor@defecttracker.uk">
+                        </div>
+                        <div>
+                            <label for="smtp_from_name">From Name</label>
+                            <input type="text" id="smtp_from_name" name="smtp_from_name" 
+                                   value="<?php echo htmlspecialchars(getenv('SMTP_FROM_NAME') ?: 'PhoneMonitor'); ?>" 
+                                   placeholder="PhoneMonitor">
+                        </div>
                     </div>
                     
                     <div class="form-group">
