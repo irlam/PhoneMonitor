@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../auth.php';
+require_once __DIR__ . '/../GeofenceService.php';
+require_once __DIR__ . '/../NotificationService.php';
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -142,6 +144,14 @@ try {
             "INSERT INTO device_locations (device_id, lat, lon, accuracy, provider, loc_ts) VALUES (?, ?, ?, ?, ?, ?)",
             [$deviceId, $lat, $lon, $accuracy, $provider, $locTs]
         );
+        
+        // Check geofences for this location
+        GeofenceService::checkGeofences($deviceId, $lat, $lon);
+    }
+    
+    // Check for low battery alert (below 15%)
+    if (isset($payload['battery']) && $payload['battery'] < 15) {
+        NotificationService::sendLowBatteryAlert($deviceId, $payload['battery']);
     }
     
     http_response_code(200);

@@ -56,6 +56,9 @@ $devices = db()->fetchAll(
         <header class="header">
             <h1>PhoneMonitor</h1>
             <div class="header-actions">
+                <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <span id="theme-icon">🌙</span>
+                </button>
                 <span class="user-info">Logged in as <?php echo htmlspecialchars(Auth::name()); ?></span>
                 <a href="/logout.php" class="btn btn-secondary">Logout</a>
             </div>
@@ -64,6 +67,7 @@ $devices = db()->fetchAll(
         <nav class="nav">
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php" class="active">All Devices</a>
+            <a href="/geofences.php">Geofences</a>
         </nav>
         
         <main class="main-content">
@@ -153,5 +157,21 @@ $devices = db()->fetchAll(
             <p><small>No access to personal data, messages, calls, or media · No keylogging, screenshots, or surveillance capabilities</small></p>
         </footer>
     </div>
+    
+    <script>
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+    }
+    
+    // Load dark mode preference
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-icon').textContent = '☀️';
+    }
+    </script>
 </body>
 </html>

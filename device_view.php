@@ -27,13 +27,18 @@ if (!$device) {
     exit;
 }
 
-// Fetch recent locations (last 10)
+// Handle date filter
+$filterDays = isset($_GET['days']) ? intval($_GET['days']) : 7;
+$filterDays = max(1, min(90, $filterDays)); // Limit between 1 and 90 days
+
+// Fetch locations based on filter
 $locations = db()->fetchAll(
     "SELECT * FROM device_locations 
      WHERE device_id = ? 
+     AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
      ORDER BY created_at DESC 
-     LIMIT 10",
-    [$deviceId]
+     LIMIT 500",
+    [$deviceId, $filterDays]
 );
 
 // Get the latest location for the map
@@ -57,6 +62,9 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
         <header class="header">
             <h1>PhoneMonitor</h1>
             <div class="header-actions">
+                <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <span id="theme-icon">🌙</span>
+                </button>
                 <span class="user-info">Logged in as <?php echo htmlspecialchars(Auth::name()); ?></span>
                 <a href="/logout.php" class="btn btn-secondary">Logout</a>
             </div>
@@ -65,6 +73,7 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
         <nav class="nav">
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php">All Devices</a>
+            <a href="/geofences.php">Geofences</a>
         </nav>
         
         <main class="main-content">
@@ -201,26 +210,38 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
                 
                 <?php if (!empty($locations)): ?>
                     <div class="info-section">
-                        <h3>Recent Locations (Last 10)</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Location History</h3>
+                            <div class="filter-controls">
+                                <a href="?id=<?php echo $deviceId; ?>&days=1" class="filter-btn <?php echo $filterDays == 1 ? 'active' : ''; ?>">Last 24h</a>
+                                <a href="?id=<?php echo $deviceId; ?>&days=7" class="filter-btn <?php echo $filterDays == 7 ? 'active' : ''; ?>">Last Week</a>
+                                <a href="?id=<?php echo $deviceId; ?>&days=30" class="filter-btn <?php echo $filterDays == 30 ? 'active' : ''; ?>">Last Month</a>
+                                <a href="?id=<?php echo $deviceId; ?>&days=90" class="filter-btn <?php echo $filterDays == 90 ? 'active' : ''; ?>">Last 90 Days</a>
+                            </div>
+                        </div>
+                        <p style="color: #6c757d; margin-bottom: 15px;">Showing <?php echo count($locations); ?> location updates from the last <?php echo $filterDays; ?> day(s)</p>
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
                                     <tr>
                                         <th>Date/Time</th>
-                                        <th>Latitude</th>
-                                        <th>Longitude</th>
+                                        <th>Coordinates</th>
                                         <th>Accuracy</th>
                                         <th>Provider</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($locations as $loc): ?>
                                         <tr>
                                             <td><?php echo date('d/m/Y H:i:s', strtotime($loc['created_at'])); ?></td>
-                                            <td><?php echo htmlspecialchars($loc['lat']); ?></td>
-                                            <td><?php echo htmlspecialchars($loc['lon']); ?></td>
+                                            <td><code><?php echo number_format($loc['lat'], 6); ?>, <?php echo number_format($loc['lon'], 6); ?></code></td>
                                             <td><?php echo $loc['accuracy'] ? htmlspecialchars($loc['accuracy']) . 'm' : 'N/A'; ?></td>
                                             <td><?php echo htmlspecialchars($loc['provider'] ?? 'N/A'); ?></td>
+                                            <td>
+                                                <a href="https://www.google.com/maps?q=<?php echo $loc['lat']; ?>,<?php echo $loc['lon']; ?>" 
+                                                   target="_blank" class="btn btn-sm btn-primary">View 🗺️</a>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -244,5 +265,21 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
             <p><small>No access to personal data, messages, calls, or media · No keylogging, screenshots, or surveillance capabilities</small></p>
         </footer>
     </div>
+    
+    <script>
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+    }
+    
+    // Load dark mode preference
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-icon').textContent = '☀️';
+    }
+    </script>
 </body>
 </html>

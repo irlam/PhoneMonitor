@@ -42,14 +42,18 @@ $devices = db()->fetchAll(
         <header class="header">
             <h1>PhoneMonitor Dashboard</h1>
             <div class="header-actions">
+                <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <span id="theme-icon">🌙</span>
+                </button>
                 <span class="user-info">Logged in as <?php echo htmlspecialchars(Auth::name()); ?></span>
                 <a href="/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </header>
         
         <nav class="nav">
-            <a href="/dashboard.php" class="active">Devices</a>
+            <a href="/dashboard.php" class="active">Dashboard</a>
             <a href="/devices.php">All Devices</a>
+            <a href="/geofences.php">Geofences</a>
         </nav>
         
         <main class="main-content">
@@ -110,6 +114,14 @@ $devices = db()->fetchAll(
                 <p>Click on any device to view detailed information and location history</p>
             </div>
             
+            <!-- Device Filters -->
+            <div class="filter-controls">
+                <button class="filter-btn active" onclick="filterDevices('all')">All Devices</button>
+                <button class="filter-btn" onclick="filterDevices('online')">🟢 Online</button>
+                <button class="filter-btn" onclick="filterDevices('offline')">⚫ Offline</button>
+                <button class="filter-btn" onclick="filterDevices('revoked')">🚫 Revoked</button>
+            </div>
+            
             <?php if (empty($devices)): ?>
                 <div class="empty-state">
                     <div class="empty-icon">📱</div>
@@ -120,7 +132,8 @@ $devices = db()->fetchAll(
             <?php else: ?>
                 <div class="device-grid">
                     <?php foreach ($devices as $device): ?>
-                        <div class="device-card <?php echo $device['revoked'] ? 'revoked' : ''; ?>">
+                        <div class="device-card <?php echo $device['revoked'] ? 'revoked' : ''; ?>" 
+                             data-status="<?php echo $device['revoked'] ? 'revoked' : ($device['is_online'] ? 'online' : 'offline'); ?>">
                             <div class="device-header">
                                 <h3><?php echo htmlspecialchars($device['display_name']); ?></h3>
                                 <?php if ($device['revoked']): ?>
@@ -197,5 +210,100 @@ $devices = db()->fetchAll(
             <p><small>No access to personal data, messages, calls, or media · No keylogging, screenshots, or surveillance capabilities</small></p>
         </footer>
     </div>
+    
+    <script>
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+    }
+    
+    // Load dark mode preference
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-icon').textContent = '☀️';
+    }
+    
+    // Device Filtering
+    function filterDevices(status) {
+        const cards = document.querySelectorAll('.device-card');
+        const buttons = document.querySelectorAll('.filter-btn');
+        
+        // Update button states
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Filter cards
+        cards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            
+            if (status === 'all') {
+                card.classList.remove('hidden');
+            } else if (status === cardStatus) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Auto-refresh dashboard every 30 seconds
+    let refreshInterval;
+    
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            // Refresh stats silently
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Update stats cards
+                    const statsGrid = doc.querySelector('.stats-grid');
+                    if (statsGrid) {
+                        document.querySelector('.stats-grid').innerHTML = statsGrid.innerHTML;
+                    }
+                    
+                    // Update device cards
+                    const deviceGrid = doc.querySelector('.device-grid');
+                    if (deviceGrid) {
+                        const currentFilter = document.querySelector('.filter-btn.active');
+                        const currentStatus = currentFilter ? currentFilter.textContent.toLowerCase() : 'all';
+                        
+                        document.querySelector('.device-grid').innerHTML = deviceGrid.innerHTML;
+                        
+                        // Reapply filter if not 'all'
+                        if (!currentStatus.includes('all')) {
+                            setTimeout(() => {
+                                if (currentStatus.includes('online')) filterDevices('online');
+                                else if (currentStatus.includes('offline')) filterDevices('offline');
+                                else if (currentStatus.includes('revoked')) filterDevices('revoked');
+                            }, 100);
+                        }
+                    }
+                    
+                    console.log('Dashboard refreshed at ' + new Date().toLocaleTimeString());
+                })
+                .catch(err => console.error('Auto-refresh failed:', err));
+        }, 30000); // 30 seconds
+    }
+    
+    // Start auto-refresh on page load
+    startAutoRefresh();
+    
+    // Pause refresh when page is hidden, resume when visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            clearInterval(refreshInterval);
+            console.log('Auto-refresh paused');
+        } else {
+            startAutoRefresh();
+            console.log('Auto-refresh resumed');
+        }
+    });
+    </script>
 </body>
 </html>
