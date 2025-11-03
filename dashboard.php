@@ -1,22 +1,11 @@
-<?php
-/**
- * Dashboard - Device List
- */
-
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/db.php';
-
-Auth::require();
-
-// Fetch all devices
-$devices = db()->fetchAll(
+// Fetch device stats
+$stats = db()->fetchOne(
     "SELECT 
-        d.*,
-        (TIMESTAMPDIFF(MINUTE, d.last_seen, NOW()) < 60) as is_online,
-        (SELECT COUNT(*) FROM device_locations WHERE device_id = d.id) as location_count
-    FROM devices d 
-    ORDER BY d.last_seen DESC, d.registered_at DESC"
+        COUNT(*) as total_devices,
+        SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, last_seen, NOW()) < 60 THEN 1 ELSE 0 END) as online_devices,
+        SUM(CASE WHEN consent_given = 1 THEN 1 ELSE 0 END) as consented_devices,
+        SUM(CASE WHEN revoked = 1 THEN 1 ELSE 0 END) as revoked_devices
+    FROM devices"
 );
 
 ?>
@@ -45,14 +34,56 @@ $devices = db()->fetchAll(
         
         <main class="main-content">
             <div class="page-header">
-                <h2>Registered Devices</h2>
-                <p class="subtitle">Consent-based family device monitoring</p>
+                <h2>Device Overview</h2>
+                <p class="subtitle">Monitor your family's devices with consent and transparency</p>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📱</div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo $stats['total_devices']; ?></div>
+                        <div class="stat-label">Total Devices</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo $stats['online_devices']; ?></div>
+                        <div class="stat-label">Online Now</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo $stats['consented_devices']; ?></div>
+                        <div class="stat-label">With Consent</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🚫</div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo $stats['revoked_devices']; ?></div>
+                        <div class="stat-label">Revoked</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section-header">
+                <h3>Registered Devices</h3>
+                <p>Click on any device to view detailed information and location history</p>
             </div>
             
             <?php if (empty($devices)): ?>
-                <div class="alert alert-info">
-                    <strong>No devices registered yet</strong>
+                <div class="empty-state">
+                    <div class="empty-icon">📱</div>
+                    <h3>No devices registered yet</h3>
                     <p>Install the Android app on a device and register it to see it here.</p>
+                    <p class="empty-subtitle">All monitoring requires explicit consent from device owners.</p>
                 </div>
             <?php else: ?>
                 <div class="device-grid">
@@ -72,19 +103,19 @@ $devices = db()->fetchAll(
                             <div class="device-info">
                                 <p><strong>Owner:</strong> <?php echo htmlspecialchars($device['owner_name']); ?></p>
                                 <p><strong>UUID:</strong> <code><?php echo htmlspecialchars($device['device_uuid']); ?></code></p>
-                                <p><strong>Registered:</strong> <?php echo date('Y-m-d H:i', strtotime($device['registered_at'])); ?></p>
+                                <p><strong>Registered:</strong> <?php echo date('M j, Y', strtotime($device['registered_at'])); ?></p>
                                 <p><strong>Last Seen:</strong> 
                                     <?php 
                                     if ($device['last_seen']) {
                                         $diff = time() - strtotime($device['last_seen']);
                                         if ($diff < 60) {
-                                            echo 'Just now';
+                                            echo '<span style="color: var(--success-color); font-weight: 600;">Just now</span>';
                                         } elseif ($diff < 3600) {
                                             echo floor($diff / 60) . ' minutes ago';
                                         } elseif ($diff < 86400) {
                                             echo floor($diff / 3600) . ' hours ago';
                                         } else {
-                                            echo date('Y-m-d H:i', strtotime($device['last_seen']));
+                                            echo date('M j, Y', strtotime($device['last_seen']));
                                         }
                                     } else {
                                         echo 'Never';
@@ -97,13 +128,15 @@ $devices = db()->fetchAll(
                                 ?>
                                     <div class="device-status">
                                         <?php if (isset($payload['battery'])): ?>
-                                            <p><strong>Battery:</strong> <?php echo htmlspecialchars($payload['battery']); ?>%</p>
+                                            <p><strong>Battery:</strong> <?php echo htmlspecialchars($payload['battery']); ?>% 
+                                                <?php if ($payload['battery'] > 80): ?>🔋<?php elseif ($payload['battery'] > 20): ?>🪫<?php else: ?>🔌<?php endif; ?>
+                                            </p>
                                         <?php endif; ?>
                                         <?php if (isset($payload['free_storage'])): ?>
-                                            <p><strong>Storage:</strong> <?php echo htmlspecialchars($payload['free_storage']); ?> GB free</p>
+                                            <p><strong>Storage:</strong> <?php echo htmlspecialchars($payload['free_storage']); ?> GB free 💾</p>
                                         <?php endif; ?>
                                         <?php if (isset($payload['note'])): ?>
-                                            <p><strong>Note:</strong> <?php echo htmlspecialchars($payload['note']); ?></p>
+                                            <p><strong>Note:</strong> <?php echo htmlspecialchars($payload['note']); ?> 📝</p>
                                         <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
@@ -113,12 +146,12 @@ $devices = db()->fetchAll(
                                 <?php endif; ?>
                                 
                                 <?php if ($device['location_count'] > 0): ?>
-                                    <p><strong>Locations:</strong> <?php echo $device['location_count']; ?> recorded</p>
+                                    <p><strong>Locations:</strong> <?php echo $device['location_count']; ?> recorded 📍</p>
                                 <?php endif; ?>
                             </div>
                             
                             <div class="device-actions">
-                                <a href="/device_view.php?id=<?php echo $device['id']; ?>" class="btn btn-primary">View Details</a>
+                                <a href="/device_view.php?id=<?php echo $device['id']; ?>" class="btn btn-primary">View Details 👁️</a>
                             </div>
                         </div>
                     <?php endforeach; ?>
