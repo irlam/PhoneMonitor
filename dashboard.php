@@ -84,6 +84,77 @@ $stats = db()->fetchOne(
                 </div>
             </div>
             
+            <!-- Demo Cards Section -->
+            <div class="section-header">
+                <h3>Card Styles Demo</h3>
+                <p>Showcasing different card variants and layouts</p>
+            </div>
+            
+            <div class="demo-cards-grid">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h4 class="card-title">Primary Card</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>This is a primary card with a green accent border. Perfect for highlighting important information.</p>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Last updated 2 mins ago</small>
+                        <a href="#" class="btn btn-sm btn-primary">View Details</a>
+                    </div>
+                </div>
+                
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h4 class="card-title">Success Card</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Success cards indicate positive actions or confirmations. Great for status updates.</p>
+                    </div>
+                </div>
+                
+                <div class="card card-warning">
+                    <div class="card-header">
+                        <h4 class="card-title">Warning Card</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Warning cards draw attention to important notices or potential issues.</p>
+                    </div>
+                </div>
+                
+                <div class="card card-danger">
+                    <div class="card-header">
+                        <h4 class="card-title">Danger Card</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Danger cards highlight critical issues that need immediate attention.</p>
+                    </div>
+                </div>
+                
+                <div class="card card-info card-compact">
+                    <div class="card-header">
+                        <h4 class="card-title">Compact Info Card</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>This is a compact card variant with smaller padding and text. Ideal for dense layouts.</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Default Card</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>The default card style with glassmorphism effects and smooth hover animations.</p>
+                        <ul>
+                            <li>Glassmorphism background</li>
+                            <li>Smooth hover effects</li>
+                            <li>Animated accent borders</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
             <div class="section-header">
                 <h3>Registered Devices</h3>
                 <p>Click on any device to view detailed information and location history</p>
