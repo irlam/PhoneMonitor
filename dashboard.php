@@ -19,6 +19,15 @@ $stats = db()->fetchOne(
     FROM devices"
 );
 
+// Fetch all devices
+$devices = db()->fetchAll(
+    "SELECT d.*,
+        TIMESTAMPDIFF(MINUTE, d.last_seen, NOW()) < 60 as is_online,
+        (SELECT COUNT(*) FROM device_locations WHERE device_id = d.id) as location_count
+    FROM devices d
+    ORDER BY d.last_seen DESC"
+);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -95,6 +104,8 @@ $stats = db()->fetchOne(
                     <a href="/devices.php" class="stat-action-btn">View Revoked</a>
                 </div>
             </div>
+            
+            <div class="section-header">
                 <h3>Registered Devices</h3>
                 <p>Click on any device to view detailed information and location history</p>
             </div>

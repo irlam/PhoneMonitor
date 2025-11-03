@@ -669,6 +669,13 @@ body::before {
 }
 
 /* Premium Stats Cards - Dark Gradient Style */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    margin-bottom: 50px;
+}
+
 .stat-card-enhanced {
     background: linear-gradient(135deg, #1a2332 0%, #2d4a5a 50%, #1a3a4a 100%);
     border: 1px solid rgba(100, 150, 180, 0.2);
