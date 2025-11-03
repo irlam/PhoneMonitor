@@ -138,6 +138,10 @@ if (!empty($rowSpeedsMph)) {
         <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo htmlspecialchars(GOOGLE_MAPS_API_KEY); ?>"></script>
     <?php endif; ?>
         <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+        <link rel="mask-icon" href="/assets/icons/favicon.svg" color="#22bb66">
         <link rel="manifest" href="/assets/icons/site.webmanifest">
 </head>
 <body>

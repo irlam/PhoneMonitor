@@ -32,13 +32,15 @@ function loadEnv($path = BASE_PATH . '/.env') {
             list($key, $value) = explode('=', $line, 2);
             $key = trim($key);
             $value = trim($value);
-            
-            // Set environment variable if not already set
-            if (!getenv($key)) {
-                putenv("$key=$value");
-                $_ENV[$key] = $value;
-                $_SERVER[$key] = $value;
+            // Strip optional surrounding quotes
+            if ((str_starts_with($value, '"') && str_ends_with($value, '"')) || (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+                $value = substr($value, 1, -1);
             }
+            
+            // Always set/override from .env to ensure latest values apply
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
     }
 }

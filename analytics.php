@@ -10,6 +10,12 @@ require_once __DIR__ . '/AnalyticsService.php';
 
 Auth::require();
 
+// Optional: clear analytics cache on demand
+if (isset($_GET['clear_cache'])) {
+    AnalyticsService::clearCache();
+    $flash = ['type' => 'success', 'message' => 'Analytics cache cleared.'];
+}
+
 // Get analytics data
 $overview = AnalyticsService::getOverviewStats();
 $devices = AnalyticsService::getDeviceComparison();
@@ -29,6 +35,10 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics - PhoneMonitor</title>
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="mask-icon" href="/assets/icons/favicon.svg" color="#22bb66">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
     <link rel="stylesheet" href="assets/css/site.css?v=<?php echo urlencode(ASSET_VERSION); ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -119,9 +129,19 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
         </nav>
         
         <main class="main-content">
+            <?php if (!empty($flash)): ?>
+            <div class="alert alert-success">
+                <?php echo htmlspecialchars($flash['message']); ?>
+            </div>
+            <?php endif; ?>
             <div class="page-header">
                 <h2>📈 Analytics Dashboard</h2>
                 <p class="subtitle">Visual insights and statistical analysis</p>
+                <div class="filter-controls" style="margin-top: 10px;">
+                    <a href="/export.php?type=devices_csv" class="btn btn-secondary">Export Devices CSV</a>
+                    <a href="/export.php?type=battery_csv" class="btn btn-secondary">Export Battery CSV</a>
+                    <a href="/analytics.php?clear_cache=1" class="btn btn-primary">Clear Cache</a>
+                </div>
             </div>
             
             <!-- Overview Stats -->

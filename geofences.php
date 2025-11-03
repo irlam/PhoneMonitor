@@ -64,6 +64,10 @@ $devices = db()->fetchAll("SELECT id, display_name FROM devices ORDER BY display
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geofences - PhoneMonitor</title>
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="mask-icon" href="/assets/icons/favicon.svg" color="#22bb66">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
     <link rel="stylesheet" href="assets/css/site.css?v=<?php echo urlencode(ASSET_VERSION); ?>">
 </head>

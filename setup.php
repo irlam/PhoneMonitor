@@ -95,9 +95,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (file_put_contents($envFile, $newEnvContent)) {
+                // Reload env immediately so status reflects new values without manual refresh
+                try { loadEnv($envFile); } catch (Exception $e) { /* ignore */ }
                 $message = ['type' => 'success', 'text' => 'Configuration updated! Please reload the page to see changes.'];
             } else {
                 $message = ['type' => 'error', 'text' => 'Failed to write .env file. Check file permissions.'];
+            }
+        } elseif ($action === 'generate_icons') {
+            // Generate PNG favicon fallbacks from SVG (uses Imagick if available, else GD placeholders)
+            $outDir = __DIR__ . '/assets/icons';
+            if (!is_dir($outDir)) { @mkdir($outDir, 0775, true); }
+            $svgPath = $outDir . '/favicon.svg';
+            $sizes = [16, 32, 180, 192, 512];
+
+            $generated = [];
+            try {
+                if (extension_loaded('imagick')) {
+                    foreach ($sizes as $sz) {
+                        $svg = file_get_contents($svgPath);
+                        $cls = 'Imagick';
+                        $im = new $cls();
+                        $im->readImageBlob($svg);
+                        $im->setImageFormat('png');
+                        // Use thumbnailImage to avoid referencing filter constants
+                        $im->thumbnailImage($sz, $sz, true, true);
+                        $target = $outDir . '/' . ($sz === 180 ? 'apple-touch-icon' : 'favicon-' . $sz . 'x' . $sz) . '.png';
+                        if ($sz === 192) { $target = $outDir . '/android-chrome-192x192.png'; }
+                        if ($sz === 512) { $target = $outDir . '/android-chrome-512x512.png'; }
+                        $im->writeImage($target);
+                        $generated[] = basename($target);
+                        $im->clear();
+                        $im->destroy();
+                    }
+                } else {
+                    // Fallback: create simple brand-color squares as placeholders using GD
+                    foreach ($sizes as $sz) {
+                        $img = imagecreatetruecolor($sz, $sz);
+                        $bg = imagecolorallocate($img, 0x22, 0xBB, 0x66);
+                        imagefilledrectangle($img, 0, 0, $sz, $sz, $bg);
+                        $target = $outDir . '/' . ($sz === 180 ? 'apple-touch-icon' : 'favicon-' . $sz . 'x' . $sz) . '.png';
+                        if ($sz === 192) { $target = $outDir . '/android-chrome-192x192.png'; }
+                        if ($sz === 512) { $target = $outDir . '/android-chrome-512x512.png'; }
+                        imagepng($img, $target);
+                        imagedestroy($img);
+                        $generated[] = basename($target);
+                    }
+                }
+                $message = ['type' => 'success', 'text' => 'Favicons generated: ' . implode(', ', $generated)];
+            } catch (Throwable $e) {
+                $message = ['type' => 'error', 'text' => 'Failed to generate icons: ' . $e->getMessage()];
             }
         }
     }
@@ -113,6 +159,7 @@ $status = [
     'smtp_configured' => !empty(getenv('SMTP_HOST')),
     'geofences_table' => false,
     'notifications_table' => false,
+    'icons_ready' => file_exists(__DIR__ . '/assets/icons/favicon-32x32.png') && file_exists(__DIR__ . '/assets/icons/favicon-16x16.png') && file_exists(__DIR__ . '/assets/icons/apple-touch-icon.png'),
 ];
 
 try {
@@ -284,6 +331,12 @@ $setupComplete = $status['database'] && $status['geofences_table'] && $status['n
                                 <?php echo $status['notifications_table'] ? '✓ Ready' : '⚠ Not Installed'; ?>
                             </span>
                         </div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <strong>Favicons:</strong>
+                            <span class="status-badge <?php echo $status['icons_ready'] ? 'status-ok' : 'status-warning'; ?>">
+                                <?php echo $status['icons_ready'] ? '✓ Ready' : '⚠ Not Generated'; ?>
+                            </span>
+                        </div>
                     </div>
                     
                     <?php if ($setupComplete): ?>
@@ -436,6 +489,16 @@ mysql -u your_user -p phone_monitor < database/migrations/003_geofences.sql
                     <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
                         <div>
                             <label for="smtp_port">SMTP Port</label>
+
+                    <hr>
+                    <h4>🖼️ Favicons & App Icons</h4>
+                    <p>Generate PNG fallbacks (16x16, 32x32, 180x180, and Android 192/512) from the vector icon.</p>
+                    <form method="POST" style="margin-top: 10px;">
+                        <?php CSRF::field(); ?>
+                        <input type="hidden" name="action" value="generate_icons">
+                        <button type="submit" class="btn btn-secondary">Generate Favicons</button>
+                        <small style="margin-left: 10px;">Uses Imagick if available, otherwise creates brand-color placeholders via GD.</small>
+                    </form>
                             <input type="number" id="smtp_port" name="smtp_port" class="form-control"
                                    value="<?php echo htmlspecialchars(getenv('SMTP_PORT') ?: '465'); ?>" 
                                    placeholder="465">
