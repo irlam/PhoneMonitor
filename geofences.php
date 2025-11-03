@@ -63,6 +63,8 @@ $devices = db()->fetchAll("SELECT id, display_name FROM devices ORDER BY display
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geofences - PhoneMonitor</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+    <link rel="manifest" href="/assets/icons/site.webmanifest">
     <link rel="stylesheet" href="assets/css/site.css?v=<?php echo urlencode(ASSET_VERSION); ?>">
 </head>
 <body>

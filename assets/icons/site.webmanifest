@@ -1,0 +1,16 @@
+{
+  "name": "PhoneMonitor",
+  "short_name": "PhoneMonitor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#22bb66",
+  "theme_color": "#22bb66",
+  "icons": [
+    {
+      "src": "/assets/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

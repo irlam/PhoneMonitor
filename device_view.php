@@ -137,6 +137,8 @@ if (!empty($rowSpeedsMph)) {
     <?php if (GOOGLE_MAPS_API_KEY && $latestLocation): ?>
         <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo htmlspecialchars(GOOGLE_MAPS_API_KEY); ?>"></script>
     <?php endif; ?>
+        <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+        <link rel="manifest" href="/assets/icons/site.webmanifest">
 </head>
 <body>
     <div class="container">

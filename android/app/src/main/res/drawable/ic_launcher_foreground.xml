@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Phone body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.95"
+        android:pathData="M34,20h40a6,6 0 0 1 6,6v56a6,6 0 0 1 -6,6h-40a6,6 0 0 1 -6,-6v-56a6,6 0 0 1 6,-6z"/>
+    <path
+        android:fillColor="#1A9950"
+        android:pathData="M42,26h24a2,2 0 0 1 2,2v2a2,2 0 0 1 -2,2h-24a2,2 0 0 1 -2,-2v-2a2,2 0 0 1 2,-2z"/>
+    <path
+        android:fillColor="#1A9950"
+        android:pathData="M52,78m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0"/>
+
+    <!-- Shield badge -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.95"
+        android:strokeColor="#1A9950"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M70,38 l16,6 v8 c0,12 -8,20 -16,23 c-8,-3 -16,-11 -16,-23 v-8 z"/>
+    <path
+        android:strokeColor="#1A9950"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M70,42 v12"/>
+    <path
+        android:strokeColor="#1A9950"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M64,50 h12"/>
+</vector>
