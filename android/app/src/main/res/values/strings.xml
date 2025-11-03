@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PhoneMonitor</string>
+    <string name="settings_title">Settings</string>
+    
+    <!-- Consent Activity -->
+    <string name="consent_title">Family Device Helper</string>
+    <string name="consent_message">This app shares basic device information with your family dashboard:\n\n• Battery level\n• Free storage space\n• Optional location (requires permission)\n• Device status updates\n\nWhat this app DOES NOT do:\n• No stealth or hidden features\n• No remote control\n• No keylogging\n• No camera or microphone access\n\nYou will always see a notification when sharing is active. You can uninstall or stop sharing at any time.\n\nBy proceeding, you give explicit consent to share this information.</string>
+    <string name="consent_accept">I Accept</string>
+    <string name="consent_decline">Decline</string>
+    <string name="consent_checkbox">I have read and agree to share my device information</string>
+    
+    <!-- Settings -->
+    <string name="server_url_label">Server URL:</string>
+    <string name="location_sharing">Share Location</string>
+    <string name="location_info">Location sharing is optional. When enabled, your approximate location will be shared with the dashboard. A notification will always be visible.</string>
+    <string name="unregister_device">Stop Sharing &amp; Unregister</string>
+    
+    <!-- Main Activity -->
+    <string name="sharing_active">Family Sharing Active</string>
+    <string name="settings">Settings</string>
+    
+    <!-- Labels -->
+    <string name="server_url">Server URL</string>
+    <string name="display_name">Device Name</string>
+    <string name="owner_name">Owner Name</string>
+</resources>

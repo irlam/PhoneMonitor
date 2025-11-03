@@ -1,0 +1,91 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# PHP
+vendor/
+composer.lock
+composer.phar
+*.cache
+*.log
+
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/build/
+android/*/build/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.log
+.navigation/
+*.iml
+*.hprof
+
+# Gradle Wrapper (keep the jar)
+!android/gradle/wrapper/gradle-wrapper.jar
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Build outputs
+dist/
+*.tar.gz
+*.zip
+
+# Testing
+coverage/
+*.test
+
+# Database
+*.sql.gz
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
