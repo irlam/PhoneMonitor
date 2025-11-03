@@ -983,7 +983,7 @@ php cron_notifications.php
             </div>
 
             <!-- Guide: Mobile Apps (Android + iOS) -->
-            <div class="card" style="margin-bottom: 20px; border-left: 4px solid #3498db;">
+            <div id="mobile-apps" class="card" style="margin-bottom: 20px; border-left: 4px solid #3498db;">
                 <div class="card-header" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.12), rgba(41, 128, 185, 0.12));">
                     <h3 class="card-title">📱 Mobile Apps (Android + iOS)</h3>
                 </div>
@@ -1000,7 +1000,7 @@ php cron_notifications.php
                     </ul>
                     <p class="text-muted" style="margin-top:8px;">Gotchas: iOS requires a Mac; use HTTPS; make sure your API base URL ends with <code>/api/</code>; enable background location modes.</p>
                     <div class="mt-20">
-                        <a href="/MOBILE_APP_BUILD_GUIDE.md" class="btn btn-secondary">Open Mobile App Build Guide</a>
+                        <a href="/mobile_app_build_guide.php" class="btn btn-secondary">Open Mobile App Build Guide</a>
                     </div>
                 </div>
             </div>
@@ -1235,7 +1235,7 @@ php cron_notifications.php
                     <p>PhoneMonitor supports both Android and iOS devices. The Android app is ready to build, and we provide guidance for creating an iOS app.</p>
                     
                     <div style="background: rgba(34, 187, 102, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
-                        <h4 style="margin-top: 0;">📖 <a href="/MOBILE_APP_BUILD_GUIDE.md" target="_blank">Complete Mobile App Build Guide</a></h4>
+                        <h4 style="margin-top: 0;">📖 <a href="/mobile_app_build_guide.php" target="_blank">Complete Mobile App Build Guide</a></h4>
                         <p>Comprehensive guide covering:</p>
                         <ul style="margin-bottom: 0;">
                             <li><strong>✅ Android Build:</strong> Step-by-step instructions (app is ready!)</li>
