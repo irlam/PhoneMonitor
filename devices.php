@@ -68,6 +68,7 @@ $devices = db()->fetchAll(
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php" class="active">All Devices</a>
             <a href="/geofences.php">Geofences</a>
+            <a href="/setup.php">Setup & Help</a>
         </nav>
         
         <main class="main-content">

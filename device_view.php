@@ -74,6 +74,7 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php">All Devices</a>
             <a href="/geofences.php">Geofences</a>
+            <a href="/setup.php">Setup & Help</a>
         </nav>
         
         <main class="main-content">
