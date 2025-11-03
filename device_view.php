@@ -82,6 +82,50 @@ function computeCurrentSpeedMph($deviceInternalId) {
 }
 
 $currentSpeedMph = computeCurrentSpeedMph((int)$device['id']);
+
+// Pre-compute per-row speeds (mph) for the location history using consecutive points
+$rowSpeedsMph = [];
+if (!empty($locations)) {
+    for ($i = 0; $i < count($locations) - 1; $i++) {
+        $a = $locations[$i];
+        $b = $locations[$i + 1];
+        $valid = isset($a['lat'], $a['lon'], $a['created_at'], $b['lat'], $b['lon'], $b['created_at']);
+        if (!$valid) { $rowSpeedsMph[$i] = null; continue; }
+        $t1 = strtotime($a['created_at']);
+        $t2 = strtotime($b['created_at']);
+        if (!$t1 || !$t2 || $t1 === $t2) { $rowSpeedsMph[$i] = null; continue; }
+        $delta = abs($t1 - $t2);
+        if ($delta > 900) { $rowSpeedsMph[$i] = null; continue; } // > 15 minutes, skip
+        $lat1 = deg2rad((float)$a['lat']);
+        $lon1 = deg2rad((float)$a['lon']);
+        $lat2 = deg2rad((float)$b['lat']);
+        $lon2 = deg2rad((float)$b['lon']);
+        $dlat = $lat2 - $lat1;
+        $dlon = $lon2 - $lon1;
+        $hav = sin($dlat/2)**2 + cos($lat1)*cos($lat2)*sin($dlon/2)**2;
+        $earthRadiusKm = 6371.0;
+        $distanceKm = 2 * $earthRadiusKm * asin(min(1, sqrt($hav)));
+        $hours = $delta / 3600.0;
+        if ($hours <= 0) { $rowSpeedsMph[$i] = null; continue; }
+        $speedKmh = $distanceKm / $hours;
+        $rowSpeedsMph[$i] = round($speedKmh * 0.621371, 1);
+    }
+}
+
+// Compute average speed (mph) across valid segments in the filtered window
+$avgSpeedMph = null;
+$avgSpeedSegments = 0;
+$avgSpeedThresholdMph = defined('SPEED_AVG_THRESHOLD_MPH') ? (float)SPEED_AVG_THRESHOLD_MPH : 75; // configurable threshold
+if (!empty($rowSpeedsMph)) {
+    $sum = 0.0; $cnt = 0;
+    foreach ($rowSpeedsMph as $v) {
+        if ($v !== null) { $sum += $v; $cnt++; }
+    }
+    if ($cnt > 0) { 
+        $avgSpeedMph = round($sum / $cnt, 1); 
+        $avgSpeedSegments = $cnt;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -271,14 +315,36 @@ $currentSpeedMph = computeCurrentSpeedMph((int)$device['id']);
                     <div class="info-section">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h3>Location History</h3>
-                            <div class="filter-controls">
-                                <a href="?id=<?php echo $deviceId; ?>&days=1" class="filter-btn <?php echo $filterDays == 1 ? 'active' : ''; ?>">Last 24h</a>
-                                <a href="?id=<?php echo $deviceId; ?>&days=7" class="filter-btn <?php echo $filterDays == 7 ? 'active' : ''; ?>">Last Week</a>
-                                <a href="?id=<?php echo $deviceId; ?>&days=30" class="filter-btn <?php echo $filterDays == 30 ? 'active' : ''; ?>">Last Month</a>
-                                <a href="?id=<?php echo $deviceId; ?>&days=90" class="filter-btn <?php echo $filterDays == 90 ? 'active' : ''; ?>">Last 90 Days</a>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="filter-controls">
+                                    <a href="?id=<?php echo $deviceId; ?>&days=1" class="filter-btn <?php echo $filterDays == 1 ? 'active' : ''; ?>">Last 24h</a>
+                                    <a href="?id=<?php echo $deviceId; ?>&days=7" class="filter-btn <?php echo $filterDays == 7 ? 'active' : ''; ?>">Last Week</a>
+                                    <a href="?id=<?php echo $deviceId; ?>&days=30" class="filter-btn <?php echo $filterDays == 30 ? 'active' : ''; ?>">Last Month</a>
+                                    <a href="?id=<?php echo $deviceId; ?>&days=90" class="filter-btn <?php echo $filterDays == 90 ? 'active' : ''; ?>">Last 90 Days</a>
+                                </div>
+                                <?php 
+                                    $avgClass = 'badge-secondary';
+                                    if ($avgSpeedMph !== null) {
+                                        $avgClass = ($avgSpeedMph > $avgSpeedThresholdMph) ? 'badge-danger' : 'badge-info';
+                                    }
+                                    $avgTitle = 'Average of recent consecutive segment speeds (<= 15 min apart) within the selected window.';
+                                    if ($avgSpeedMph !== null) {
+                                        $avgTitle .= ' Segments included: ' . $avgSpeedSegments . '. Threshold: ' . $avgSpeedThresholdMph . ' mph. Filter: last ' . intval($filterDays) . ' day(s).';
+                                    }
+                                ?>
+                                <span class="badge <?php echo $avgClass; ?>" title="<?php echo htmlspecialchars($avgTitle); ?>">
+                                    Avg speed: <?php echo $avgSpeedMph !== null ? number_format($avgSpeedMph, 1) . ' mph' : '-'; ?>
+                                </span>
                             </div>
                         </div>
                         <p style="color: #6c757d; margin-bottom: 15px;">Showing <?php echo count($locations); ?> location updates from the last <?php echo $filterDays; ?> day(s)</p>
+                        <div class="text-muted" style="font-size: 12px; margin-top: -8px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <span>Legend:</span>
+                            <span class="badge badge-secondary">Avg speed: -</span>
+                            <span class="badge badge-info">Avg speed ≤ <?php echo number_format($avgSpeedThresholdMph, 0); ?> mph</span>
+                            <span class="badge badge-danger">Avg speed &gt; <?php echo number_format($avgSpeedThresholdMph, 0); ?> mph</span>
+                            <span>(Segments use consecutive points ≤ 15 min apart)</span>
+                        </div>
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
@@ -286,6 +352,7 @@ $currentSpeedMph = computeCurrentSpeedMph((int)$device['id']);
                                         <th>Date/Time</th>
                                         <th>Coordinates</th>
                                         <th>Accuracy</th>
+                                        <th>Speed (mph)</th>
                                         <th>Provider</th>
                                         <th>Actions</th>
                                     </tr>
@@ -296,6 +363,19 @@ $currentSpeedMph = computeCurrentSpeedMph((int)$device['id']);
                                             <td><?php echo date('d/m/Y H:i:s', strtotime($loc['created_at'])); ?></td>
                                             <td><code><?php echo number_format($loc['lat'], 6); ?>, <?php echo number_format($loc['lon'], 6); ?></code></td>
                                             <td><?php echo $loc['accuracy'] ? htmlspecialchars($loc['accuracy']) . 'm' : 'N/A'; ?></td>
+                                            <td>
+                                                <?php 
+                                                    $idx = isset($i) ? $i : null; // ensure no bleed; compute per-row index another way
+                                                ?>
+                                                <?php /* use a local loop index by iterating with for instead of foreach? Keep simple: derive index via array pointer */ ?>
+                                                <?php 
+                                                    // Derive index of current $loc
+                                                    static $__rowIndex = 0; 
+                                                    $speedVal = $rowSpeedsMph[$__rowIndex] ?? null; 
+                                                ?>
+                                                <?php echo $speedVal !== null ? number_format($speedVal, 1) : '-'; ?>
+                                                <?php $__rowIndex++; ?>
+                                            </td>
                                             <td><?php echo htmlspecialchars($loc['provider'] ?? 'N/A'); ?></td>
                                             <td>
                                                 <a href="https://www.google.com/maps?q=<?php echo $loc['lat']; ?>,<?php echo $loc['lon']; ?>" 

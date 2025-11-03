@@ -69,6 +69,54 @@ foreach ($devices as $idx => $dev) {
     $devices[$idx]['speed_mph'] = computeCurrentSpeedMph((int)$dev['id']);
 }
 
+// Helper: compute average speed (mph) over recent hours using consecutive segments
+function computeAvgSpeedMph($deviceInternalId, $hoursWindow = 24) {
+    try {
+        $rows = db()->fetchAll(
+            "SELECT lat, lon, created_at FROM device_locations WHERE device_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? HOUR) ORDER BY created_at DESC LIMIT 500",
+            [$deviceInternalId, (int)$hoursWindow]
+        );
+        if (!$rows || count($rows) < 2) return [null, 0];
+        $sum = 0.0; $cnt = 0;
+        for ($i = 0; $i < count($rows) - 1; $i++) {
+            $a = $rows[$i];
+            $b = $rows[$i+1];
+            if (!$a['created_at'] || !$b['created_at']) continue;
+            $t1 = strtotime($a['created_at']);
+            $t2 = strtotime($b['created_at']);
+            if (!$t1 || !$t2 || $t1 === $t2) continue;
+            $delta = abs($t1 - $t2);
+            if ($delta > 900) continue; // only segments <= 15 minutes apart
+            $lat1 = deg2rad((float)$a['lat']);
+            $lon1 = deg2rad((float)$a['lon']);
+            $lat2 = deg2rad((float)$b['lat']);
+            $lon2 = deg2rad((float)$b['lon']);
+            $dlat = $lat2 - $lat1;
+            $dlon = $lon2 - $lon1;
+            $hav = sin($dlat/2)**2 + cos($lat1)*cos($lat2)*sin($dlon/2)**2;
+            $earthRadiusKm = 6371.0;
+            $distanceKm = 2 * $earthRadiusKm * asin(min(1, sqrt($hav)));
+            $hours = $delta / 3600.0;
+            if ($hours <= 0) continue;
+            $speedKmh = $distanceKm / $hours;
+            $sum += ($speedKmh * 0.621371);
+            $cnt++;
+        }
+        if ($cnt === 0) return [null, 0];
+        return [round($sum / $cnt, 1), $cnt];
+    } catch (Exception $e) {
+        return [null, 0];
+    }
+}
+
+// Compute and attach average speeds for UI chips
+$avgThreshold = defined('SPEED_AVG_THRESHOLD_MPH') ? (float)SPEED_AVG_THRESHOLD_MPH : 75;
+foreach ($devices as $idx => $dev) {
+    [$avgMph, $segCnt] = computeAvgSpeedMph((int)$dev['id'], 24);
+    $devices[$idx]['avg_speed_mph'] = $avgMph;
+    $devices[$idx]['avg_speed_segments'] = $segCnt;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -247,6 +295,19 @@ foreach ($devices as $idx => $dev) {
                                 <?php if (!empty($device['speed_mph'])): ?>
                                     <p><strong>Speed:</strong> <?php echo number_format($device['speed_mph'], 1); ?> mph 🚗</p>
                                 <?php endif; ?>
+                                <?php 
+                                    $avgClass = 'badge-secondary';
+                                    $avgTitle = 'Average of recent consecutive segment speeds (<= 15 min apart) over last 24h.';
+                                    if (!is_null($device['avg_speed_mph'])) {
+                                        $avgClass = ($device['avg_speed_mph'] > $avgThreshold) ? 'badge-danger' : 'badge-info';
+                                        $avgTitle .= ' Segments: ' . intval($device['avg_speed_segments']) . '. Threshold: ' . number_format($avgThreshold, 0) . ' mph';
+                                    }
+                                ?>
+                                <div class="mt-20">
+                                    <span class="badge <?php echo $avgClass; ?>" title="<?php echo htmlspecialchars($avgTitle); ?>">
+                                        Avg 24h: <?php echo !is_null($device['avg_speed_mph']) ? number_format($device['avg_speed_mph'], 1) . ' mph' : '-'; ?>
+                                    </span>
+                                </div>
                             </div>
                             
                             <div class="device-actions">

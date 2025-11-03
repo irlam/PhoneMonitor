@@ -63,6 +63,8 @@ define('ASSET_VERSION', getenv('ASSET_VERSION') ?: '2');
 define('CSRF_KEY', getenv('CSRF_KEY') ?: 'change_this_key');
 define('REQUIRE_CONSENT', filter_var(getenv('REQUIRE_CONSENT') ?: 'true', FILTER_VALIDATE_BOOLEAN));
 define('GOOGLE_MAPS_API_KEY', getenv('GOOGLE_MAPS_API_KEY') ?: '');
+// Speed analytics threshold (mph) for highlighting average speed chip
+define('SPEED_AVG_THRESHOLD_MPH', is_numeric(getenv('SPEED_AVG_THRESHOLD_MPH')) ? (float)getenv('SPEED_AVG_THRESHOLD_MPH') : 75);
 
 // Error reporting based on environment
 if (APP_ENV === 'development') {
