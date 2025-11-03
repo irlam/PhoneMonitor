@@ -15,7 +15,7 @@ $message = '';
 // Handle configuration updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CSRF::validateToken()) {
-        $message = ['type' => 'error', 'text' => 'Invalid request'];
+        $message = ['type' => 'error', 'text' => '✗ Invalid security token. Please refresh and try again.'];
     } else {
         $action = $_POST['action'] ?? '';
         
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $testEmail = trim($_POST['test_email_address'] ?? getenv('ADMIN_EMAIL') ?: '');
                 if (empty($testEmail)) {
-                    $message = ['type' => 'error', 'text' => 'Please provide an email address to test'];
+                    $message = ['type' => 'error', 'text' => '✗ Please provide an email address to test'];
                 } else {
                     $testSubject = 'PhoneMonitor Test Email - ' . date('Y-m-d H:i:s');
                     $testBody = "This is a test email from PhoneMonitor.\n\n";
@@ -50,10 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Immediately send it
                     NotificationService::sendPending();
                     
-                    $message = ['type' => 'success', 'text' => "Test email sent to {$testEmail}! Check your inbox (and spam folder)."];
+                    $message = ['type' => 'success', 'text' => "✓ Test email sent to <strong>{$testEmail}</strong>!<br><small>Check your inbox and spam folder. Email sent via " . (getenv('SMTP_HOST') ? 'SMTP (' . getenv('SMTP_HOST') . ')' : 'PHP mail()') . "</small>"];
                 }
             } catch (Exception $e) {
-                $message = ['type' => 'error', 'text' => 'Failed to send test email: ' . $e->getMessage()];
+                $message = ['type' => 'error', 'text' => '✗ Failed to send test email: <code>' . htmlspecialchars($e->getMessage()) . '</code>'];
             }
         } elseif ($action === 'update_env') {
             $envFile = __DIR__ . '/.env';
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $envContent = parse_ini_file($envFile);
             }
             
-            // Update values
+            // Update values (allow empty to clear/unset optional fields)
             $updates = [
                 'SITE_URL' => trim($_POST['site_url'] ?? ''),
                 'GOOGLE_MAPS_API_KEY' => trim($_POST['google_maps_key'] ?? ''),
@@ -80,9 +80,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'SMTP_FROM_NAME' => trim($_POST['smtp_from_name'] ?? ''),
             ];
             
+            // Track what's being saved
+            $savedFields = [];
+            $clearedFields = [];
+            
             foreach ($updates as $key => $value) {
-                if (!empty($value)) {
+                // Always update the value (even if empty, to allow clearing)
+                $oldValue = $envContent[$key] ?? '';
+                
+                if ($value !== '') {
                     $envContent[$key] = $value;
+                    if ($oldValue !== $value) {
+                        $savedFields[] = $key;
+                    }
+                } else {
+                    // Empty value - remove from config if it existed
+                    if (isset($envContent[$key])) {
+                        unset($envContent[$key]);
+                        $clearedFields[] = $key;
+                    }
                 }
             }
             
@@ -97,9 +113,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (file_put_contents($envFile, $newEnvContent)) {
                 // Reload env immediately so status reflects new values without manual refresh
                 try { loadEnv($envFile); } catch (Exception $e) { /* ignore */ }
-                $message = ['type' => 'success', 'text' => 'Configuration updated! Please reload the page to see changes.'];
+                
+                // Build detailed success message
+                $details = [];
+                if (!empty($savedFields)) {
+                    $details[] = count($savedFields) . ' field(s) saved: ' . implode(', ', array_map(function($f) {
+                        return '<code>' . htmlspecialchars($f) . '</code>';
+                    }, $savedFields));
+                }
+                if (!empty($clearedFields)) {
+                    $details[] = count($clearedFields) . ' field(s) cleared: ' . implode(', ', array_map(function($f) {
+                        return '<code>' . htmlspecialchars($f) . '</code>';
+                    }, $clearedFields));
+                }
+                
+                $detailsText = !empty($details) ? '<br><small>' . implode('; ', $details) . '</small>' : '';
+                $message = ['type' => 'success', 'text' => '✓ Configuration updated successfully!' . $detailsText];
             } else {
-                $message = ['type' => 'error', 'text' => 'Failed to write .env file. Check file permissions.'];
+                $message = ['type' => 'error', 'text' => '✗ Failed to write .env file. Check file permissions.'];
             }
         } elseif ($action === 'generate_icons') {
             // Generate PNG favicon fallbacks from SVG (uses Imagick if available, else GD placeholders)
@@ -141,9 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $generated[] = basename($target);
                     }
                 }
-                $message = ['type' => 'success', 'text' => 'Favicons generated: ' . implode(', ', $generated)];
+                $message = ['type' => 'success', 'text' => '✓ Favicons generated successfully!<br><small>Created: ' . implode(', ', array_map(function($f) {
+                    return '<code>' . htmlspecialchars($f) . '</code>';
+                }, $generated)) . '</small>'];
             } catch (Throwable $e) {
-                $message = ['type' => 'error', 'text' => 'Failed to generate icons: ' . $e->getMessage()];
+                $message = ['type' => 'error', 'text' => '✗ Failed to generate icons: <code>' . htmlspecialchars($e->getMessage()) . '</code>'];
             }
         }
     }
@@ -277,9 +310,67 @@ $setupComplete = $status['database'] && $status['geofences_table'] && $status['n
             </div>
             
             <?php if ($message): ?>
-                <div class="alert alert-<?php echo $message['type']; ?>">
-                    <?php echo htmlspecialchars($message['text']); ?>
+                <div class="alert alert-<?php echo $message['type']; ?>" style="
+                    padding: 20px 24px;
+                    margin-bottom: 24px;
+                    border-radius: 12px;
+                    border-left: 5px solid;
+                    font-size: 15px;
+                    line-height: 1.6;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                    animation: slideDown 0.3s ease-out;
+                    <?php if ($message['type'] === 'success'): ?>
+                        background: linear-gradient(135deg, rgba(34, 187, 102, 0.12), rgba(26, 153, 80, 0.08));
+                        border-left-color: #22bb66;
+                        color: #0d5e33;
+                    <?php elseif ($message['type'] === 'error'): ?>
+                        background: linear-gradient(135deg, rgba(220, 53, 69, 0.12), rgba(200, 35, 51, 0.08));
+                        border-left-color: #dc3545;
+                        color: #721c24;
+                    <?php elseif ($message['type'] === 'warning'): ?>
+                        background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(224, 168, 0, 0.08));
+                        border-left-color: #ffc107;
+                        color: #856404;
+                    <?php else: ?>
+                        background: linear-gradient(135deg, rgba(13, 110, 253, 0.12), rgba(10, 88, 202, 0.08));
+                        border-left-color: #0d6efd;
+                        color: #084298;
+                    <?php endif; ?>
+                ">
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="font-size: 24px; flex-shrink: 0;">
+                            <?php 
+                            echo $message['type'] === 'success' ? '✅' : 
+                                 ($message['type'] === 'error' ? '❌' : 
+                                 ($message['type'] === 'warning' ? '⚠️' : 'ℹ️'));
+                            ?>
+                        </span>
+                        <div style="flex: 1;">
+                            <?php echo $message['text']; ?>
+                        </div>
+                    </div>
                 </div>
+                <style>
+                    @keyframes slideDown {
+                        from { opacity: 0; transform: translateY(-10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    body.dark-mode .alert {
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                    }
+                    body.dark-mode .alert.alert-success {
+                        background: linear-gradient(135deg, rgba(34, 187, 102, 0.2), rgba(26, 153, 80, 0.15)) !important;
+                        color: #7febb1 !important;
+                    }
+                    body.dark-mode .alert.alert-error {
+                        background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(200, 35, 51, 0.15)) !important;
+                        color: #f8a5ad !important;
+                    }
+                    body.dark-mode .alert.alert-warning {
+                        background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(224, 168, 0, 0.15)) !important;
+                        color: #ffd966 !important;
+                    }
+                </style>
             <?php endif; ?>
             
             <!-- System Status Overview -->
