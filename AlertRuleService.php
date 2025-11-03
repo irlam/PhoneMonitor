@@ -305,7 +305,7 @@ class AlertRuleService {
         return db()->fetchAll("
             SELECT ar.*, d.owner_name
             FROM alert_rules ar
-            LEFT JOIN devices d ON ar.device_id = d.device_uuid
+            LEFT JOIN devices d ON ar.device_id = d.device_uuid COLLATE utf8mb4_unicode_ci
             ORDER BY ar.enabled DESC, ar.name ASC
         ");
     }
@@ -325,7 +325,7 @@ class AlertRuleService {
             SELECT art.*, ar.name as rule_name, d.owner_name
             FROM alert_rule_triggers art
             JOIN alert_rules ar ON art.alert_rule_id = ar.id
-                JOIN devices d ON art.device_id = d.device_uuid
+            JOIN devices d ON art.device_id = d.device_uuid COLLATE utf8mb4_unicode_ci
             ORDER BY art.triggered_at DESC
             LIMIT ?
         ", [$limit]);
