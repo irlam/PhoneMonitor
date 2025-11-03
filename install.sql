@@ -60,8 +60,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Seed default admin user
--- Default password is 'changeme123' - MUST be changed after first login
+-- ⚠️ CRITICAL SECURITY WARNING ⚠️
+-- Default password is 'changeme123' - THIS MUST BE CHANGED IMMEDIATELY AFTER FIRST LOGIN!
 -- To generate a new password hash, run: php -r "echo password_hash('your_password', PASSWORD_DEFAULT);"
+-- Then update: UPDATE users SET password_hash = 'new_hash' WHERE username = 'admin';
 INSERT INTO users (username, password_hash, name) VALUES 
 ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator')
 ON DUPLICATE KEY UPDATE username=username;

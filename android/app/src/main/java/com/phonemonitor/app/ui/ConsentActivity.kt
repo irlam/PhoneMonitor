@@ -69,6 +69,16 @@ class ConsentActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             
+            // Check for placeholder server URL
+            if (serverUrl.contains("your-domain.example")) {
+                Toast.makeText(
+                    this, 
+                    "Please enter your actual server URL, not the example placeholder",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+            
             // Save preferences
             prefs.serverUrl = serverUrl
             prefs.displayName = displayName
