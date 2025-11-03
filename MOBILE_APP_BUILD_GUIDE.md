@@ -9,6 +9,7 @@ Complete guide for building PhoneMonitor apps for Android and iOS devices.
 1. [Platform Compatibility](#platform-compatibility)
 2. [Android Build Guide](#android-build-guide)
 3. [iOS Build Guide](#ios-build-guide)
+4. [Kotlin Multiplatform (KMM) – ELI5](#kotlin-multiplatform-kmm--eli5)
 4. [Configuration](#configuration)
 5. [Testing](#testing)
 6. [Distribution](#distribution)
@@ -959,3 +960,63 @@ flutter pub add geolocator http permission_handler
 - Ask specific questions about implementation
 
 **Good luck building your apps! 🚀**
+
+---
+
+## 🧩 Kotlin Multiplatform (KMM) – ELI5
+
+Think of KMM as “share the brains, customize the faces.” You write your app's logic (network calls, JSON parsing, math, rules) once in Kotlin, then plug that logic into two separate apps: an Android app and an iOS app. The screens (UI) are still built per platform, so they look and feel native.
+
+### What you get
+- One shared Kotlin module with your API client for `/api/register.php`, `/api/ping.php`, etc.
+- Android app uses the shared module directly
+- iOS app uses the shared module compiled as an iOS framework
+
+### What you don’t get (yet)
+- A single “build once, get both apps” button. UIs are still separate. (There is Compose Multiplatform, but it’s still maturing for iOS. Good for devs, not ELI5-friendly yet.)
+
+### Step-by-step (beginner friendly)
+1) Install Android Studio (latest) on your computer
+  - Windows/Linux/macOS all okay
+2) Install Xcode on a Mac if you want to build the iOS app (Apple requires a Mac)
+3) In Android Studio: File → New → New Project → Search for “KMM” template
+  - If you don’t see it, install the “Kotlin Multiplatform” plugin
+4) Create a KMM project with:
+  - Shared module: Kotlin
+  - Android app: Kotlin
+  - iOS target: iOS framework (the template sets this up)
+5) In the shared module (usually `shared/src/commonMain`):
+  - Add a simple API client using Ktor or OkHttp (Ktor is cross-platform)
+  - Example pseudo-code:
+
+```kotlin
+// shared/src/commonMain/kotlin/com/pm/shared/Api.kt
+class Api(private val baseUrl: String) {
+   suspend fun register(deviceId: String, owner: String) { /* POST to /api/register.php */ }
+   suspend fun ping(lat: Double, lon: Double, battery: Int) { /* POST to /api/ping.php */ }
+}
+```
+
+6) Android app (the template includes one):
+  - Call the shared `Api` from Android ViewModel/Activity/Service
+  - Build APK and test
+7) iOS app:
+  - The KMM build generates an iOS framework (e.g., `Shared.framework`)
+  - Open the iOS sample in Xcode (the template creates it)
+  - Import the generated framework and call `Api` from Swift code
+  - Build and run on an iPhone or simulator
+
+### Common errors and quick fixes
+- “Xcode not found” → You must use a Mac to build/run iOS
+- “Framework not found Shared” → Rebuild KMM to regenerate the iOS framework, then re-add it to Xcode
+- “SSL/HTTP errors” → Ensure your API URL uses HTTPS and ends with `/api/`
+- “Network on main thread” → Always call network code in a background coroutine (Kotlin) or async (Swift)
+- “App suspended in background” → Configure background location modes (Android foreground service; iOS background location)
+
+### Should you use KMM?
+- If you want to share logic and keep native UIs → ✅ Good choice
+- If you want one codebase for everything including UI with minimal Apple tooling → Consider Flutter/React Native instead
+
+### Compose Multiplatform (optional)
+- You can also try Compose Multiplatform to share UI, but it’s not as ELI5-friendly
+- Still evolving for iOS; great for developers who can handle occasional platform workarounds

@@ -981,6 +981,29 @@ php cron_notifications.php
                     </ul>
                 </div>
             </div>
+
+            <!-- Guide: Mobile Apps (Android + iOS) -->
+            <div class="card" style="margin-bottom: 20px; border-left: 4px solid #3498db;">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.12), rgba(41, 128, 185, 0.12));">
+                    <h3 class="card-title">📱 Mobile Apps (Android + iOS)</h3>
+                </div>
+                <div class="card-body">
+                    <p>
+                        New to coding? Start with Android—it’s ready now. For iOS, you can build a small native Swift app
+                        or use <strong>Kotlin Multiplatform (KMM)</strong> to share the logic and keep simple native screens.
+                        We’ve prepared an ELI5 guide that covers both paths, common errors, and step-by-step setup.
+                    </p>
+                    <ul>
+                        <li><strong>Android</strong>: Open the <code>android/</code> folder in Android Studio, set your server URL, then Run or build a release APK.</li>
+                        <li><strong>iOS (Swift)</strong>: Build in Xcode on a Mac. Enable background location and call the same API endpoints.</li>
+                        <li><strong>KMM (Shared Logic)</strong>: Share your API code between Android and iOS; keep native UI for a familiar look and feel.</li>
+                    </ul>
+                    <p class="text-muted" style="margin-top:8px;">Gotchas: iOS requires a Mac; use HTTPS; make sure your API base URL ends with <code>/api/</code>; enable background location modes.</p>
+                    <div class="mt-20">
+                        <a href="/MOBILE_APP_BUILD_GUIDE.md" class="btn btn-secondary">Open Mobile App Build Guide</a>
+                    </div>
+                </div>
+            </div>
             
             <!-- Feature: Telegram/Discord Alerts (Phase 3) -->
             <div class="card" style="margin-bottom: 20px; border-left: 4px solid #9b59b6;">
