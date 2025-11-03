@@ -1,0 +1,84 @@
+<?php
+/**
+ * Login Page
+ */
+
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/csrf.php';
+
+Auth::startSession();
+
+// If already logged in, redirect to dashboard
+if (Auth::check()) {
+    header('Location: /dashboard.php');
+    exit;
+}
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CSRF::validateToken()) {
+        $error = 'Invalid request. Please try again.';
+    } else {
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        
+        if (empty($username) || empty($password)) {
+            $error = 'Please enter both username and password.';
+        } elseif (Auth::attempt($username, $password)) {
+            Auth::logAction('user_login');
+            header('Location: /dashboard.php');
+            exit;
+        } else {
+            $error = 'Invalid username or password.';
+            sleep(1); // Simple rate limiting
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PhoneMonitor</title>
+    <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <h1>PhoneMonitor</h1>
+            <p class="subtitle">Family Device Helper</p>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-error">
+                    <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+            
+            <form method="POST" action="/login.php">
+                <?php CSRF::field(); ?>
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autofocus 
+                           value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+            
+            <div class="login-help">
+                <p><small>Default credentials: admin / changeme123</small></p>
+                <p><small>Change password immediately after first login!</small></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
