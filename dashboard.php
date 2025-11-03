@@ -1,6 +1,17 @@
+<?php
+/**
+ * Dashboard - Device List
+ */
+
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/db.php';
+
+Auth::require();
+
 // Fetch device stats
 $stats = db()->fetchOne(
-    "SELECT 
+    "SELECT
         COUNT(*) as total_devices,
         SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, last_seen, NOW()) < 60 THEN 1 ELSE 0 END) as online_devices,
         SUM(CASE WHEN consent_given = 1 THEN 1 ELSE 0 END) as consented_devices,
