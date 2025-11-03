@@ -28,6 +28,47 @@ $devices = db()->fetchAll(
     ORDER BY d.last_seen DESC"
 );
 
+// Helper: compute current speed (mph) from last two locations within recent window
+function computeCurrentSpeedMph($deviceInternalId) {
+    try {
+        $rows = db()->fetchAll(
+            "SELECT lat, lon, created_at FROM device_locations WHERE device_id = ? ORDER BY created_at DESC LIMIT 2",
+            [$deviceInternalId]
+        );
+        if (!$rows || count($rows) < 2) return null;
+        $a = $rows[0];
+        $b = $rows[1];
+        if (!$a['created_at'] || !$b['created_at']) return null;
+        $t1 = strtotime($a['created_at']);
+        $t2 = strtotime($b['created_at']);
+        if (!$t1 || !$t2 || $t1 === $t2) return null;
+        // Only consider if updates are within the last 15 minutes to avoid stale speeds
+        if (abs(time() - $t1) > 3600) return null; // last point older than 1 hour
+        if (abs($t1 - $t2) > 900) return null; // interval greater than 15 minutes
+        $lat1 = deg2rad((float)$a['lat']);
+        $lon1 = deg2rad((float)$a['lon']);
+        $lat2 = deg2rad((float)$b['lat']);
+        $lon2 = deg2rad((float)$b['lon']);
+        $dlat = $lat2 - $lat1;
+        $dlon = $lon2 - $lon1;
+        $hav = sin($dlat/2)**2 + cos($lat1)*cos($lat2)*sin($dlon/2)**2;
+        $earthRadiusKm = 6371.0;
+        $distanceKm = 2 * $earthRadiusKm * asin(min(1, sqrt($hav)));
+        $hours = abs($t1 - $t2) / 3600.0;
+        if ($hours <= 0) return null;
+        $speedKmh = $distanceKm / $hours;
+        $speedMph = $speedKmh * 0.621371;
+        return round($speedMph, 1);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+// Attach computed speed to each device (best-effort; N is typically small)
+foreach ($devices as $idx => $dev) {
+    $devices[$idx]['speed_mph'] = computeCurrentSpeedMph((int)$dev['id']);
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -202,6 +243,9 @@ $devices = db()->fetchAll(
                                 
                                 <?php if ($device['location_count'] > 0): ?>
                                     <p><strong>Locations:</strong> <?php echo $device['location_count']; ?> recorded 📍</p>
+                                <?php endif; ?>
+                                <?php if (!empty($device['speed_mph'])): ?>
+                                    <p><strong>Speed:</strong> <?php echo number_format($device['speed_mph'], 1); ?> mph 🚗</p>
                                 <?php endif; ?>
                             </div>
                             

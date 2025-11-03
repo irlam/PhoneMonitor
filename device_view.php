@@ -45,6 +45,43 @@ $locations = db()->fetchAll(
 $latestLocation = !empty($locations) ? $locations[0] : null;
 
 $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) : [];
+
+// Helper: compute current speed (mph) from last two locations within recent window
+function computeCurrentSpeedMph($deviceInternalId) {
+    try {
+        $rows = db()->fetchAll(
+            "SELECT lat, lon, created_at FROM device_locations WHERE device_id = ? ORDER BY created_at DESC LIMIT 2",
+            [$deviceInternalId]
+        );
+        if (!$rows || count($rows) < 2) return null;
+        $a = $rows[0];
+        $b = $rows[1];
+        if (!$a['created_at'] || !$b['created_at']) return null;
+        $t1 = strtotime($a['created_at']);
+        $t2 = strtotime($b['created_at']);
+        if (!$t1 || !$t2 || $t1 === $t2) return null;
+        if (abs(time() - $t1) > 3600) return null; // last point older than 1 hour
+        if (abs($t1 - $t2) > 900) return null; // interval greater than 15 minutes
+        $lat1 = deg2rad((float)$a['lat']);
+        $lon1 = deg2rad((float)$a['lon']);
+        $lat2 = deg2rad((float)$b['lat']);
+        $lon2 = deg2rad((float)$b['lon']);
+        $dlat = $lat2 - $lat1;
+        $dlon = $lon2 - $lon1;
+        $hav = sin($dlat/2)**2 + cos($lat1)*cos($lat2)*sin($dlon/2)**2;
+        $earthRadiusKm = 6371.0;
+        $distanceKm = 2 * $earthRadiusKm * asin(min(1, sqrt($hav)));
+        $hours = abs($t1 - $t2) / 3600.0;
+        if ($hours <= 0) return null;
+        $speedKmh = $distanceKm / $hours;
+        $speedMph = $speedKmh * 0.621371;
+        return round($speedMph, 1);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+$currentSpeedMph = computeCurrentSpeedMph((int)$device['id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -154,6 +191,12 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
                                     <td><?php echo htmlspecialchars($payload['free_storage']); ?> GB</td>
                                 </tr>
                             <?php endif; ?>
+                            <?php if (!empty($currentSpeedMph)): ?>
+                                <tr>
+                                    <th>Speed:</th>
+                                    <td><?php echo number_format($currentSpeedMph, 1); ?> mph</td>
+                                </tr>
+                            <?php endif; ?>
                             <?php if (isset($payload['note'])): ?>
                                 <tr>
                                     <th>Note:</th>
@@ -193,11 +236,15 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
                                         title: '<?php echo htmlspecialchars($device['display_name']); ?>'
                                     });
                                     
-                                    const infoWindow = new google.maps.InfoWindow({
-                                        content: '<div><strong><?php echo htmlspecialchars($device['display_name']); ?></strong><br>' +
-                                                'Last updated: <?php echo date('d/m/Y H:i:s', strtotime($latestLocation['created_at'])); ?><br>' +
-                                                'Accuracy: <?php echo $latestLocation['accuracy'] ?? 'N/A'; ?>m</div>'
-                                    });
+                                    const infoHtml = <?php 
+                                        $infoHtml = '<div><strong>' . htmlspecialchars($device['display_name']) . '</strong><br>' .
+                                                    'Last updated: ' . date('d/m/Y H:i:s', strtotime($latestLocation['created_at'])) . '<br>' .
+                                                    'Accuracy: ' . ($latestLocation['accuracy'] ?? 'N/A') . 'm' .
+                                                    ($currentSpeedMph ? '<br>Speed: ' . number_format($currentSpeedMph, 1) . ' mph' : '') .
+                                                    '</div>';
+                                        echo json_encode($infoHtml);
+                                    ?>;
+                                    const infoWindow = new google.maps.InfoWindow({ content: infoHtml });
                                     
                                     marker.addListener('click', function() {
                                         infoWindow.open(map, marker);
