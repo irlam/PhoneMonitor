@@ -51,40 +51,50 @@ $stats = db()->fetchOne(
             
             <!-- Stats Cards -->
             <div class="stats-grid">
-                <div class="card card-primary stat-card-enhanced">
-                    <div class="card-body text-center">
-                        <div class="stat-icon-large">�</div>
-                        <div class="stat-number"><?php echo $stats['total_devices']; ?></div>
-                        <div class="stat-label">Total Devices</div>
+                <div class="stat-card-enhanced card-primary">
+                    <div class="stat-card-icon-wrapper">
+                        <div class="stat-icon-box">📱</div>
+                        <div class="stat-category-badge">DEVICES</div>
                     </div>
+                    <div class="stat-label">Total Devices</div>
+                    <div class="stat-number"><?php echo $stats['total_devices']; ?></div>
+                    <div class="stat-description">All registered devices across your monitoring network.</div>
+                    <a href="/devices.php" class="stat-action-btn">Manage Devices</a>
                 </div>
                 
-                <div class="card card-success stat-card-enhanced">
-                    <div class="card-body text-center">
-                        <div class="stat-icon-large">�</div>
-                        <div class="stat-number"><?php echo $stats['online_devices']; ?></div>
-                        <div class="stat-label">Online Now</div>
+                <div class="stat-card-enhanced card-success">
+                    <div class="stat-card-icon-wrapper">
+                        <div class="stat-icon-box">🟢</div>
+                        <div class="stat-category-badge">STATUS</div>
                     </div>
+                    <div class="stat-label">Online Now</div>
+                    <div class="stat-number"><?php echo $stats['online_devices']; ?></div>
+                    <div class="stat-description">Active devices seen within the last 60 minutes.</div>
+                    <a href="/devices.php" class="stat-action-btn">View Active</a>
                 </div>
                 
-                <div class="card card-info stat-card-enhanced">
-                    <div class="card-body text-center">
-                        <div class="stat-icon-large">✅</div>
-                        <div class="stat-number"><?php echo $stats['consented_devices']; ?></div>
-                        <div class="stat-label">With Consent</div>
+                <div class="stat-card-enhanced card-info">
+                    <div class="stat-card-icon-wrapper">
+                        <div class="stat-icon-box">✅</div>
+                        <div class="stat-category-badge">CONSENT</div>
                     </div>
+                    <div class="stat-label">With Consent</div>
+                    <div class="stat-number"><?php echo $stats['consented_devices']; ?></div>
+                    <div class="stat-description">Devices with explicit monitoring consent given.</div>
+                    <a href="/devices.php" class="stat-action-btn">Review Consent</a>
                 </div>
                 
-                <div class="card card-danger stat-card-enhanced">
-                    <div class="card-body text-center">
-                        <div class="stat-icon-large">🚫</div>
-                        <div class="stat-number"><?php echo $stats['revoked_devices']; ?></div>
-                        <div class="stat-label">Revoked</div>
+                <div class="stat-card-enhanced card-danger">
+                    <div class="stat-card-icon-wrapper">
+                        <div class="stat-icon-box">🚫</div>
+                        <div class="stat-category-badge">REVOKED</div>
                     </div>
+                    <div class="stat-label">Revoked Access</div>
+                    <div class="stat-number"><?php echo $stats['revoked_devices']; ?></div>
+                    <div class="stat-description">Devices with revoked monitoring permissions.</div>
+                    <a href="/devices.php" class="stat-action-btn">View Revoked</a>
                 </div>
             </div>
-            
-            <div class="section-header">
                 <h3>Registered Devices</h3>
                 <p>Click on any device to view detailed information and location history</p>
             </div>
