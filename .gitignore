@@ -1,0 +1,58 @@
+# Environment files
+web/.env
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+web/logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backups
+*.bak
+*.backup
+*.sql.gz
+
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/build/
+android/*/build/
+android/captures/
+android/.externalNativeBuild
+android/.cxx
+android/*.iml
+android/*.apk
+android/*.ap_
+android/*.aab
+android/gradlew
+android/gradlew.bat
+android/gradle/wrapper/gradle-wrapper.jar
+
+# Android - Keystore files (NEVER commit these!)
+android/*.jks
+android/*.keystore
+android/keystore.properties
+
+# Composer (PHP)
+web/vendor/
+web/composer.lock
+
+# Node modules (if any)
+node_modules/
+
+# OS generated files
+Thumbs.db
+Desktop.ini

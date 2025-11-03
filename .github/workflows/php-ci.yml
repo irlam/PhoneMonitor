@@ -1,0 +1,82 @@
+name: PHP CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/php-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'web/**'
+
+jobs:
+  php-ci:
+    name: PHP 8.3 CI
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP 8.3
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, pdo, pdo_mysql, mysqli
+        coverage: none
+        tools: composer
+
+    - name: Validate PHP syntax
+      run: |
+        find web -name "*.php" -print0 | xargs -0 -n1 php -l
+
+    - name: Check for security issues (basic)
+      run: |
+        cd web
+        echo "Checking for potential security issues..."
+        ! grep -r "mysql_query" . || (echo "Found mysql_query - use PDO instead" && exit 1)
+        ! grep -r "eval(" . || (echo "Found eval() - potential security risk" && exit 1)
+        ! grep -r "\$_GET\[" . --include="*.php" | grep -v "htmlspecialchars\|filter_\|preg_match" || echo "Warning: Unfiltered GET parameters detected"
+        ! grep -r "\$_POST\[" . --include="*.php" | grep -v "htmlspecialchars\|filter_\|trim\|csrf" || echo "Warning: Unfiltered POST parameters detected"
+        echo "Basic security checks completed"
+
+    - name: Install Composer dependencies (if composer.json exists)
+      run: |
+        if [ -f "web/composer.json" ]; then
+          cd web
+          composer install --prefer-dist --no-progress --no-suggest
+        else
+          echo "No composer.json found, skipping"
+        fi
+
+    - name: Run tests (if tests exist)
+      run: |
+        if [ -f "web/vendor/bin/phpunit" ]; then
+          cd web
+          ./vendor/bin/phpunit
+        else
+          echo "No PHPUnit tests found, skipping"
+        fi
+
+  codeql:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: php
+        queries: security-and-quality
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3

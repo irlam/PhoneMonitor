@@ -1,0 +1,41 @@
+# PhoneMonitor Apache Configuration
+
+# Disable directory listing
+Options -Indexes
+
+# Protect sensitive files
+<Files .env>
+    Require all denied
+</Files>
+
+<Files install.sql>
+    Require all denied
+</Files>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(self), microphone=(), camera=()"
+    
+    # HSTS - only enable after confirming HTTPS works
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# URL Rewriting (if needed)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Force HTTPS (uncomment when SSL is configured)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# PHP Settings (if not set in php.ini)
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value memory_limit 128M
+</IfModule>
