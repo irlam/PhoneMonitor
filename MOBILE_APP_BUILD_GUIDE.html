@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PhoneMonitor • Mobile App Build Guide</title>
+  <link rel="icon" href="/assets/icons/favicon-32.png" type="image/png" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a33;
+      --muted: #8da2d0;
+      --fg: #e9eefc;
+      --accent: #7c9cff;
+      --accent-2: #4de4c9;
+      --code-bg: #0f1428;
+      --border: #1e2a4a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f7f9ff; --panel: #ffffff; --muted: #4a5c82; --fg: #0b1020;
+        --accent: #3b6cff; --accent-2: #00c7a1; --code-bg: #f3f6ff; --border:#e6ecff;
+      }
+    }
+    html, body { margin:0; padding:0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; }
+    .hero {
+      background: radial-gradient(1200px 600px at -10% -10%, rgba(124,156,255,.25), transparent 60%),
+                  radial-gradient(1000px 500px at 110% -20%, rgba(77,228,201,.20), transparent 50%),
+                  linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+      padding: 60px 20px 30px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 5; backdrop-filter: blur(6px);
+    }
+    .hero h1 { margin:0 0 8px; font-size: 32px; letter-spacing: .3px; }
+    .hero p { margin:0; color: var(--muted); }
+
+    .wrap { display: grid; grid-template-columns: 280px 1fr; gap: 28px; padding: 28px; max-width: 1200px; margin: 0 auto; }
+    @media (max-width: 980px) { .wrap { grid-template-columns: 1fr; } .sidebar { position: static; } }
+
+    .sidebar { position: sticky; top: 96px; align-self: start; background: var(--panel); border:1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+    .sidebar h3 { margin: 6px 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+    .toc { list-style: none; padding: 0; margin: 0; }
+    .toc li { margin: 6px 0; }
+    .toc li.sub { margin-left: 14px; font-size: 14px; }
+    .toc a { color: var(--fg); text-decoration: none; padding: 6px 8px; border-radius: 8px; display: block; }
+    .toc a:hover { background: rgba(124,156,255,.12); color: var(--accent); }
+
+    .content { background: var(--panel); border:1px solid var(--border); border-radius: 14px; padding: 26px; box-shadow: var(--shadow); }
+    .content h1, .content h2, .content h3, .content h4 { scroll-margin-top: 85px; }
+    .content h2 { margin-top: 28px; border-top: 1px dashed var(--border); padding-top: 18px; }
+    .content h3 { margin-top: 22px; }
+    .content p { margin: 12px 0; }
+    .content hr { border: none; height: 1px; background: var(--border); margin: 24px 0; }
+    .content blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--accent); background: rgba(124,156,255,.08); border-radius: 0 10px 10px 0; color: var(--muted); }
+    .content table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 10px; border:1px solid var(--border); margin: 16px 0; }
+    .content th, .content td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .content thead { background: rgba(124,156,255,.08); }
+
+    pre.code { background: var(--code-bg); padding: 14px; border-radius: 10px; overflow: auto; border:1px solid var(--border); }
+    code.inline { background: var(--code-bg); padding: 2px 6px; border-radius: 6px; border:1px solid var(--border); }
+
+    .topbar { display:flex; gap: 10px; align-items: center; margin-top: 14px; }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; border:1px solid var(--border); background: #0f1530; color: var(--fg); text-decoration:none; box-shadow: var(--shadow); }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .anchor { opacity: 0; margin-left: 8px; color: var(--muted); text-decoration: none; }
+    h2:hover .anchor, h3:hover .anchor { opacity: 1; }
+
+    .badges { display:flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 0; }
+    .badge { font-size: 12px; padding: 4px 8px; border:1px solid var(--border); border-radius: 999px; color: var(--muted); background: rgba(77,228,201,.08); }
+
+    .footer { color: var(--muted); text-align:center; padding: 30px 20px 60px; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap" style="grid-template-columns: 1fr; padding:0;">
+      <div>
+        <h1>📱 Mobile App Build Guide</h1>
+        <p>Beautiful, readable docs for Android, iOS and Kotlin Multiplatform — powered by your markdown.</p>
+        <div class="topbar">
+          <a class="btn" href="/MOBILE_APP_BUILD_GUIDE.md" target="_blank" rel="noopener">View raw Markdown</a>
+          <a class="btn" href="/setup.php#mobile-apps">Back to Setup</a>
+        </div>
+        <div class="badges">
+          <span class="badge">Android</span>
+          <span class="badge">iOS</span>
+          <span class="badge">KMM</span>
+          <span class="badge">React Native</span>
+          <span class="badge">Flutter</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <aside class="sidebar">
+      <h3>Contents</h3>
+      <ul class="toc"><li><a href="#table-of-contents">📋 Table of Contents</a></li><li><a href="#platform-compatibility">🔄 Platform Compatibility</a></li><li class="sub"><a href="#current-status">Current Status</a></li><li class="sub"><a href="#android-support">Android Support</a></li><li class="sub"><a href="#ios-compatibility-notes">iOS Compatibility Notes</a></li><li><a href="#android-build-guide">🤖 Android Build Guide</a></li><li class="sub"><a href="#prerequisites">Prerequisites</a></li><li class="sub"><a href="#step-1-download-amp-setup">Step 1: Download &amp; Setup</a></li><li class="sub"><a href="#step-2-configure-the-app">Step 2: Configure the App</a></li><li class="sub"><a href="#step-3-update-app-signing-optional-but-recommended">Step 3: Update App Signing (Optional but Recommended)</a></li><li class="sub"><a href="#step-4-build-the-app">Step 4: Build the App</a></li><li class="sub"><a href="#step-5-install-on-device">Step 5: Install on Device</a></li><li class="sub"><a href="#app-size-amp-performance">App Size &amp; Performance</a></li><li><a href="#ios-build-guide">🍎 iOS Build Guide</a></li><li class="sub"><a href="#current-status-1">Current Status</a></li><li class="sub"><a href="#option-1-build-native-ios-app">Option 1: Build Native iOS App</a></li><li class="sub"><a href="#option-2-react-native-cross-platform">Option 2: React Native (Cross-Platform)</a></li><li class="sub"><a href="#option-3-flutter-cross-platform">Option 3: Flutter (Cross-Platform)</a></li><li><a href="#configuration">⚙️ Configuration</a></li><li class="sub"><a href="#api-endpoint-configuration">API Endpoint Configuration</a></li><li class="sub"><a href="#location-update-frequency">Location Update Frequency</a></li><li class="sub"><a href="#battery-optimization">Battery Optimization</a></li><li><a href="#testing">🧪 Testing</a></li><li class="sub"><a href="#android-testing">Android Testing</a></li><li class="sub"><a href="#ios-testing">iOS Testing</a></li><li class="sub"><a href="#api-testing">API Testing</a></li><li><a href="#distribution">📦 Distribution</a></li><li class="sub"><a href="#android-distribution-options">Android Distribution Options</a></li><li class="sub"><a href="#ios-distribution-options">iOS Distribution Options</a></li><li><a href="#troubleshooting">🔧 Troubleshooting</a></li><li class="sub"><a href="#android-issues">Android Issues</a></li><li class="sub"><a href="#ios-issues">iOS Issues</a></li><li class="sub"><a href="#api-connection-issues">API Connection Issues</a></li><li><a href="#comparison-android-vs-ios-vs-cross-platform">📊 Comparison: Android vs iOS vs Cross-Platform</a></li><li><a href="#recommendations">🎯 Recommendations</a></li><li class="sub"><a href="#for-your-current-situation">For Your Current Situation:</a></li><li class="sub"><a href="#best-choice-for-most-users">Best Choice for Most Users:</a></li><li><a href="#additional-resources">📚 Additional Resources</a></li><li class="sub"><a href="#android-development">Android Development</a></li><li class="sub"><a href="#ios-development">iOS Development</a></li><li class="sub"><a href="#cross-platform">Cross-Platform</a></li><li class="sub"><a href="#useful-tools">Useful Tools</a></li><li><a href="#quick-start-commands">🚀 Quick Start Commands</a></li><li class="sub"><a href="#android-build-ready-now">Android Build (Ready Now!)</a></li><li class="sub"><a href="#ios-build-requires-swift-development">iOS Build (Requires Swift Development)</a></li><li class="sub"><a href="#react-native-full-rewrite">React Native (Full Rewrite)</a></li><li class="sub"><a href="#flutter-full-rewrite">Flutter (Full Rewrite)</a></li><li><a href="#next-steps">✅ Next Steps</a></li><li><a href="#kotlin-multiplatform-kmm-eli5">🧩 Kotlin Multiplatform (KMM) – ELI5</a></li><li class="sub"><a href="#what-you-get">What you get</a></li><li class="sub"><a href="#what-you-don-t-get-yet">What you don’t get (yet)</a></li><li class="sub"><a href="#step-by-step-beginner-friendly">Step-by-step (beginner friendly)</a></li><li class="sub"><a href="#common-errors-and-quick-fixes">Common errors and quick fixes</a></li><li class="sub"><a href="#should-you-use-kmm">Should you use KMM?</a></li><li class="sub"><a href="#compose-multiplatform-optional">Compose Multiplatform (optional)</a></li></ul>
+    </aside>
+
+    <article class="content">
+      <h1>📱 PhoneMonitor Mobile App Build Guide</h1>
+
+<p>Complete guide for building PhoneMonitor apps for Android and iOS devices.</p>
+
+<hr />
+
+<h2 id="table-of-contents">📋 Table of Contents <a class="anchor" href="#table-of-contents" aria-label="Link to this section">#</a></h2>
+
+<ol><li><a href="#platform-compatibility" target="_blank" rel="noopener">Platform Compatibility</a></li><li><a href="#android-build-guide" target="_blank" rel="noopener">Android Build Guide</a></li><li><a href="#ios-build-guide" target="_blank" rel="noopener">iOS Build Guide</a></li><li><a href="#kotlin-multiplatform-kmm--eli5" target="_blank" rel="noopener">Kotlin Multiplatform (KMM) – ELI5</a></li><li><a href="#configuration" target="_blank" rel="noopener">Configuration</a></li><li><a href="#testing" target="_blank" rel="noopener">Testing</a></li><li><a href="#distribution" target="_blank" rel="noopener">Distribution</a></li><li><a href="#troubleshooting" target="_blank" rel="noopener">Troubleshooting</a></li></ol>
+
+<hr />
+
+<h2 id="platform-compatibility">🔄 Platform Compatibility <a class="anchor" href="#platform-compatibility" aria-label="Link to this section">#</a></h2>
+
+<h3 id="current-status">Current Status <a class="anchor" href="#current-status" aria-label="Link to this section">#</a></h3>
+
+<p>✅ <strong>Android:</strong> Fully supported (Android 6.0+ / API 23+)  
+⚠️ <strong>iOS:</strong> Requires native Swift/Objective-C development</p>
+
+<h3 id="android-support">Android Support <a class="anchor" href="#android-support" aria-label="Link to this section">#</a></h3>
+<ul><li>Minimum: Android 6.0 Marshmallow (API 23)</li><li>Target: Android 14 (API 34)</li><li>Architecture: ARM, ARM64, x86, x86_64</li><li>Language: Kotlin</li><li>Size: ~8-12 MB</li></ul>
+
+<h3 id="ios-compatibility-notes">iOS Compatibility Notes <a class="anchor" href="#ios-compatibility-notes" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Current Situation:</strong>
+<ul><li>This repository contains only the Android app (Kotlin/Java)</li><li>iOS requires a separate native app written in Swift or Objective-C</li><li>The web API is fully compatible with iOS apps</li></ul></p>
+
+<p><strong>To Support iOS:</strong>
+You have 3 options:</p>
+
+<ol><li><strong>Native iOS App (Recommended)</strong></li></ol>
+   - Create new Xcode project in Swift
+   - Use same API endpoints (api/register.php, api/ping.php, etc.)
+   - Implement Core Location for GPS tracking
+   - See &quot;iOS Development Guide&quot; section below
+
+<ol><li><strong>React Native (Cross-platform)</strong></li></ol>
+   - Build one codebase for both Android and iOS
+   - Requires complete app rewrite
+   - Good for long-term maintenance
+
+<ol><li><strong>Flutter (Cross-platform)</strong></li></ol>
+   - Dart language, compiles to native code
+   - Single codebase for both platforms
+   - Excellent performance
+
+<hr />
+
+<h2 id="android-build-guide">🤖 Android Build Guide <a class="anchor" href="#android-build-guide" aria-label="Link to this section">#</a></h2>
+
+<h3 id="prerequisites">Prerequisites <a class="anchor" href="#prerequisites" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Required Software:</strong>
+<ul><li><strong>Android Studio</strong> (Latest version - Arctic Fox or newer)</li></ul>
+  - Download: https://developer.android.com/studio
+<ul><li><strong>Java Development Kit (JDK)</strong> 11 or higher</li></ul>
+  - Included with Android Studio
+<ul><li><strong>Android SDK</strong> (installed via Android Studio)</li></ul>
+  - API Level 23 (Android 6.0) minimum
+  - API Level 34 (Android 14) recommended</p>
+
+<p><strong>System Requirements:</strong>
+<ul><li>Windows 10/11, macOS 10.14+, or Linux</li><li>8 GB RAM minimum (16 GB recommended)</li><li>8 GB free disk space</li><li>1280x800 minimum screen resolution</li></ul></p>
+
+<h3 id="step-1-download-amp-setup">Step 1: Download &amp; Setup <a class="anchor" href="#step-1-download-amp-setup" aria-label="Link to this section">#</a></h3>
+
+<ol><li><strong>Clone the repository:</strong></li></ol>
+<pre class="code"><code class="lang-bash">git clone https://github.com/irlam/PhoneMonitor.git
+cd PhoneMonitor/android
+</code></pre>
+
+<ol><li><strong>Open in Android Studio:</strong></li></ol>
+   - Launch Android Studio
+   - Click &quot;Open&quot; (not &quot;New Project&quot;)
+   - Navigate to <code class="inline">PhoneMonitor/android</code> folder
+   - Click &quot;OK&quot;
+
+<ol><li><strong>Wait for Gradle Sync:</strong></li></ol>
+   - Android Studio will automatically download dependencies
+   - This may take 5-15 minutes on first run
+   - Watch the bottom status bar for progress
+
+<h3 id="step-2-configure-the-app">Step 2: Configure the App <a class="anchor" href="#step-2-configure-the-app" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Edit Configuration File:</strong></p>
+
+<p>Open <code class="inline">android/app/src/main/res/values/strings.xml</code> and update:</p>
+
+<p><pre class="code"><code class="lang-xml">&lt;resources&gt;
+    &lt;string name=&quot;app_name&quot;&gt;PhoneMonitor&lt;/string&gt;
+    
+    &lt;!-- CHANGE THIS to your server URL --&gt;
+    &lt;string name=&quot;api_base_url&quot;&gt;https://phone-monitor.defecttracker.uk/api/&lt;/string&gt;
+    
+    &lt;string name=&quot;notification_channel_name&quot;&gt;Location Tracking&lt;/string&gt;
+    &lt;string name=&quot;notification_channel_desc&quot;&gt;Keeps the app running in the background&lt;/string&gt;
+&lt;/resources&gt;
+</code></pre></p>
+
+<p><strong>Or Edit Kotlin Constants:</strong></p>
+
+<p>Open <code class="inline">android/app/src/main/java/com/phonemonitor/app/Constants.kt</code>:</p>
+
+<p><pre class="code"><code class="lang-kotlin">object Constants {
+    // CHANGE THIS to your server URL
+    const val API_BASE_URL = &quot;https://phone-monitor.defecttracker.uk/api/&quot;
+    
+    const val LOCATION_UPDATE_INTERVAL = 15 * 60 * 1000L // 15 minutes
+    const val LOCATION_FASTEST_INTERVAL = 5 * 60 * 1000L // 5 minutes
+    
+    const val NOTIFICATION_ID = 12345
+    const val NOTIFICATION_CHANNEL_ID = &quot;phone_monitor_location&quot;
+}
+</code></pre></p>
+
+<h3 id="step-3-update-app-signing-optional-but-recommended">Step 3: Update App Signing (Optional but Recommended) <a class="anchor" href="#step-3-update-app-signing-optional-but-recommended" aria-label="Link to this section">#</a></h3>
+
+<p><strong>For Release Builds, Create a Keystore:</strong></p>
+
+<p><pre class="code"><code class="lang-bash"># Navigate to android/app directory
+cd android/app
+
+# Generate keystore
+keytool -genkey -v -keystore phonemonitor-release.keystore \
+  -alias phonemonitor \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
+
+# You&#039;ll be prompted for:
+# - Keystore password (remember this!)
+# - Your name, organization, etc.
+# - Key password (can be same as keystore password)
+</code></pre></p>
+
+<p><strong>Update build.gradle:</strong></p>
+
+<p>Edit <code class="inline">android/app/build.gradle</code> and add:</p>
+
+<p><pre class="code"><code class="lang-groovy">android {
+    ...
+    
+    signingConfigs {
+        release {
+            storeFile file(&#039;phonemonitor-release.keystore&#039;)
+            storePassword &#039;your_keystore_password&#039;
+            keyAlias &#039;phonemonitor&#039;
+            keyPassword &#039;your_key_password&#039;
+        }
+    }
+    
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile(&#039;proguard-android-optimize.txt&#039;), &#039;proguard-rules.pro&#039;
+        }
+    }
+}
+</code></pre></p>
+
+<p><strong>Security Note:</strong> Never commit keystore files or passwords to Git!</p>
+
+<h3 id="step-4-build-the-app">Step 4: Build the App <a class="anchor" href="#step-4-build-the-app" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Option A: Debug Build (for testing)</strong></p>
+
+<ol><li>Connect Android device via USB (enable Developer Mode &amp; USB Debugging)</li><li>Or use Android Emulator (Tools → AVD Manager → Create Virtual Device)</li><li>In Android Studio, click the green &quot;Run&quot; button (▶️)</li><li>Select your device</li><li>App will install and launch automatically</li></ol>
+
+<p><strong>Option B: Release APK (for distribution)</strong></p>
+
+<p>Using Android Studio:
+<ol><li>Menu: <strong>Build</strong> → <strong>Generate Signed Bundle / APK</strong></li><li>Select <strong>APK</strong></li><li>Click <strong>Next</strong></li><li>Choose your keystore file (or create new)</li><li>Enter passwords</li><li>Click <strong>Next</strong></li><li>Select <strong>release</strong> build variant</li><li>Check <strong>V2 (Full APK Signature)</strong></li><li>Click <strong>Finish</strong></li></ol></p>
+
+<p>APK will be saved to: <code class="inline">android/app/release/app-release.apk</code></p>
+
+<p><strong>Option C: Command Line Build</strong></p>
+
+<p><pre class="code"><code class="lang-bash"># Debug APK
+cd android
+./gradlew assembleDebug
+# Output: android/app/build/outputs/apk/debug/app-debug.apk
+
+# Release APK (requires signing config)
+./gradlew assembleRelease
+# Output: android/app/build/outputs/apk/release/app-release.apk
+</code></pre></p>
+
+<h3 id="step-5-install-on-device">Step 5: Install on Device <a class="anchor" href="#step-5-install-on-device" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Method 1: Android Studio</strong>
+<ul><li>Click Run button with device connected</li></ul></p>
+
+<p><strong>Method 2: ADB (Android Debug Bridge)</strong>
+<pre class="code"><code class="lang-bash">adb install android/app/release/app-release.apk
+</code></pre></p>
+
+<p><strong>Method 3: Manual Installation</strong>
+<ul><li>Transfer APK to device</li><li>Open file manager on device</li><li>Tap APK file</li><li>Enable &quot;Install from Unknown Sources&quot; if prompted</li><li>Tap &quot;Install&quot;</li></ul></p>
+
+<h3 id="app-size-amp-performance">App Size &amp; Performance <a class="anchor" href="#app-size-amp-performance" aria-label="Link to this section">#</a></h3>
+
+<ul><li><strong>Debug APK:</strong> ~15-20 MB (includes debugging symbols)</li><li><strong>Release APK:</strong> ~8-12 MB (optimized &amp; minified)</li><li><strong>Battery Impact:</strong> Low (location updates every 15 minutes)</li><li><strong>Network Usage:</strong> Minimal (~10 KB per update)</li><li><strong>RAM Usage:</strong> ~30-50 MB when running</li></ul>
+
+<hr />
+
+<h2 id="ios-build-guide">🍎 iOS Build Guide <a class="anchor" href="#ios-build-guide" aria-label="Link to this section">#</a></h2>
+
+<h3 id="current-status">Current Status <a class="anchor" href="#current-status" aria-label="Link to this section">#</a></h3>
+
+<p>❌ <strong>iOS app not yet implemented</strong></p>
+
+<p>The current repository only contains the Android app. To support iOS devices, you need to create a native iOS app.</p>
+
+<h3 id="option-1-build-native-ios-app">Option 1: Build Native iOS App <a class="anchor" href="#option-1-build-native-ios-app" aria-label="Link to this section">#</a></h3>
+
+<p><strong>What You Need:</strong>
+<ul><li>Mac computer (required for iOS development)</li><li>Xcode 14+ (free from Mac App Store)</li><li>Apple Developer Account ($99/year for App Store distribution)</li><li>Basic Swift knowledge</li></ul></p>
+
+<p><strong>Architecture Overview:</strong></p>
+
+<p><pre class="code"><code class="lang-">iOS App Components:
+├── Location Services (Core Location)
+├── Background Tasks (BGTaskScheduler)
+├── Network API (URLSession or Alamofire)
+├── Local Storage (UserDefaults/CoreData)
+└── Persistent Notification (UNUserNotificationCenter)
+
+API Endpoints (Already Built):
+├── POST /api/register.php  - Register device
+├── POST /api/ping.php      - Send location updates
+├── POST /api/consent.php   - Update consent status
+└── POST /api/revoke.php    - Revoke access
+</code></pre></p>
+
+<p><strong>Steps to Create iOS App:</strong></p>
+
+<ol><li><strong>Create Xcode Project:</strong></li></ol>
+   - Open Xcode
+   - File → New → Project
+   - Choose &quot;App&quot; template
+   - Language: Swift
+   - Interface: SwiftUI or UIKit
+
+<ol><li><strong>Add Capabilities:</strong></li></ol>
+   - Target → Signing &amp; Capabilities
+   - Add &quot;Background Modes&quot;
+     - ✓ Location updates
+     - ✓ Background fetch
+   - Add &quot;Push Notifications&quot; (optional)
+
+<ol><li><strong>Configure Info.plist:</strong></li></ol>
+<pre class="code"><code class="lang-xml">&lt;key&gt;NSLocationAlwaysAndWhenInUseUsageDescription&lt;/key&gt;
+&lt;string&gt;PhoneMonitor needs your location to help family members track your device with your consent.&lt;/string&gt;
+
+&lt;key&gt;NSLocationWhenInUseUsageDescription&lt;/key&gt;
+&lt;string&gt;PhoneMonitor needs your location to provide tracking features.&lt;/string&gt;
+
+&lt;key&gt;UIBackgroundModes&lt;/key&gt;
+&lt;array&gt;
+    &lt;string&gt;location&lt;/string&gt;
+    &lt;string&gt;fetch&lt;/string&gt;
+&lt;/array&gt;
+</code></pre>
+
+<ol><li><strong>Implement Location Manager:</strong></li></ol>
+<pre class="code"><code class="lang-swift">import CoreLocation
+
+class LocationManager: NSObject, CLLocationManagerDelegate {
+    let manager = CLLocationManager()
+    
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.requestAlwaysAuthorization()
+    }
+    
+    func startTracking() {
+        manager.startUpdatingLocation()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, 
+                        didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        
+        // Send to API
+        sendLocationUpdate(
+            lat: location.coordinate.latitude,
+            lon: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy
+        )
+    }
+}
+</code></pre>
+
+<ol><li><strong>Implement API Client:</strong></li></ol>
+<pre class="code"><code class="lang-swift">import Foundation
+
+class PhoneMonitorAPI {
+    let baseURL = &quot;https://phone-monitor.defecttracker.uk/api/&quot;
+    
+    func registerDevice(deviceId: String, ownerName: String) async throws {
+        let url = URL(string: baseURL + &quot;register.php&quot;)!
+        var request = URLRequest(url: url)
+        request.httpMethod = &quot;POST&quot;
+        request.setValue(&quot;application/json&quot;, forHTTPHeaderField: &quot;Content-Type&quot;)
+        
+        let body: [String: Any] = [
+            &quot;device_id&quot;: deviceId,
+            &quot;owner_name&quot;: ownerName,
+            &quot;device_model&quot;: UIDevice.current.model,
+            &quot;os_version&quot;: UIDevice.current.systemVersion
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        // Handle response...
+    }
+    
+    func sendLocationUpdate(lat: Double, lon: Double, accuracy: Double) async throws {
+        let url = URL(string: baseURL + &quot;ping.php&quot;)!
+        var request = URLRequest(url: url)
+        request.httpMethod = &quot;POST&quot;
+        request.setValue(&quot;application/json&quot;, forHTTPHeaderField: &quot;Content-Type&quot;)
+        
+        let body: [String: Any] = [
+            &quot;device_id&quot;: UserDefaults.standard.string(forKey: &quot;device_id&quot;) ?? &quot;&quot;,
+            &quot;latitude&quot;: lat,
+            &quot;longitude&quot;: lon,
+            &quot;accuracy&quot;: accuracy,
+            &quot;battery_level&quot;: UIDevice.current.batteryLevel * 100,
+            &quot;timestamp&quot;: ISO8601DateFormatter().string(from: Date())
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        // Handle response...
+    }
+}
+</code></pre>
+
+<ol><li><strong>Add Persistent Notification:</strong></li></ol>
+<pre class="code"><code class="lang-swift">import UserNotifications
+
+class NotificationManager {
+    static let shared = NotificationManager()
+    
+    func showPersistentNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = &quot;PhoneMonitor Active&quot;
+        content.body = &quot;Location tracking is enabled&quot;
+        content.sound = nil
+        
+        let request = UNNotificationRequest(
+            identifier: &quot;persistent&quot;,
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+    }
+}
+</code></pre>
+
+<ol><li><strong>Build &amp; Test:</strong></li></ol>
+   - Connect iPhone to Mac
+   - Select device in Xcode
+   - Click Run (⌘R)
+   - Grant location permissions
+   - Test background tracking
+
+<p><strong>iOS Build Output:</strong>
+<ul><li>Debug: .app bundle (for testing)</li><li>Release: .ipa file (for distribution)</li><li>App Store: Submit via App Store Connect</li></ul></p>
+
+<h3 id="option-2-react-native-cross-platform">Option 2: React Native (Cross-Platform) <a class="anchor" href="#option-2-react-native-cross-platform" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Pros:</strong>
+<ul><li>Single codebase for both platforms</li><li>JavaScript/TypeScript</li><li>Large community &amp; libraries</li></ul></p>
+
+<p><strong>Cons:</strong>
+<ul><li>Complete rewrite required</li><li>Larger app size (~20-30 MB)</li><li>Performance overhead</li></ul></p>
+
+<p><strong>Quick Start:</strong>
+<pre class="code"><code class="lang-bash">npx react-native init PhoneMonitor
+cd PhoneMonitor
+
+# Add dependencies
+npm install @react-native-community/geolocation
+npm install @react-native-community/netinfo
+npm install axios
+
+# Run on Android
+npm run android
+
+# Run on iOS (Mac only)
+npm run ios
+</code></pre></p>
+
+<h3 id="option-3-flutter-cross-platform">Option 3: Flutter (Cross-Platform) <a class="anchor" href="#option-3-flutter-cross-platform" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Pros:</strong>
+<ul><li>Fast native performance</li><li>Beautiful UI out of the box</li><li>Hot reload for quick development</li></ul></p>
+
+<p><strong>Cons:</strong>
+<ul><li>New language (Dart)</li><li>Complete rewrite required</li><li>Less mature ecosystem</li></ul></p>
+
+<p><strong>Quick Start:</strong>
+<pre class="code"><code class="lang-bash">flutter create phonemonitor
+cd phonemonitor
+
+# Add dependencies to pubspec.yaml
+dependencies:
+  geolocator: ^10.1.0
+  permission_handler: ^11.0.1
+  http: ^1.1.0
+
+# Run on Android
+flutter run -d android
+
+# Run on iOS (Mac only)
+flutter run -d ios
+</code></pre></p>
+
+<hr />
+
+<h2 id="configuration">⚙️ Configuration <a class="anchor" href="#configuration" aria-label="Link to this section">#</a></h2>
+
+<h3 id="api-endpoint-configuration">API Endpoint Configuration <a class="anchor" href="#api-endpoint-configuration" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Android (Kotlin):</strong>
+<pre class="code"><code class="lang-kotlin">// android/app/src/main/java/com/phonemonitor/app/Constants.kt
+object Constants {
+    const val API_BASE_URL = &quot;https://your-domain.com/api/&quot;
+}
+</code></pre></p>
+
+<p><strong>iOS (Swift):</strong>
+<pre class="code"><code class="lang-swift">// iOS/PhoneMonitor/Config.swift
+struct Config {
+    static let apiBaseURL = &quot;https://your-domain.com/api/&quot;
+}
+</code></pre></p>
+
+<p><strong>React Native (JavaScript):</strong>
+<pre class="code"><code class="lang-javascript">// src/config.js
+export const API_BASE_URL = &#039;https://your-domain.com/api/&#039;;
+</code></pre></p>
+
+<p><strong>Flutter (Dart):</strong>
+<pre class="code"><code class="lang-dart">// lib/config.dart
+class Config {
+  static const String apiBaseUrl = &#039;https://your-domain.com/api/&#039;;
+}
+</code></pre></p>
+
+<h3 id="location-update-frequency">Location Update Frequency <a class="anchor" href="#location-update-frequency" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Android:</strong>
+<pre class="code"><code class="lang-kotlin">const val LOCATION_UPDATE_INTERVAL = 15 * 60 * 1000L // 15 minutes
+const val LOCATION_FASTEST_INTERVAL = 5 * 60 * 1000L // 5 minutes
+</code></pre></p>
+
+<p><strong>iOS:</strong>
+<pre class="code"><code class="lang-swift">let locationUpdateInterval: TimeInterval = 15 * 60 // 15 minutes
+</code></pre></p>
+
+<h3 id="battery-optimization">Battery Optimization <a class="anchor" href="#battery-optimization" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Best Practices:</strong>
+<ul><li>Use 15-minute intervals (good balance between accuracy and battery)</li><li>Use &quot;Balanced Power&quot; accuracy instead of &quot;High Accuracy&quot;</li><li>Stop updates when battery &lt; 10%</li><li>Reduce frequency when device is stationary</li></ul></p>
+
+<p><strong>Android Configuration:</strong>
+<pre class="code"><code class="lang-kotlin">locationRequest = LocationRequest.create().apply {
+    interval = 15 * 60 * 1000 // 15 minutes
+    fastestInterval = 5 * 60 * 1000 // 5 minutes
+    priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+}
+</code></pre></p>
+
+<p><strong>iOS Configuration:</strong>
+<pre class="code"><code class="lang-swift">manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+manager.distanceFilter = 100 // Only update when moved 100m
+manager.activityType = .otherNavigation
+</code></pre></p>
+
+<hr />
+
+<h2 id="testing">🧪 Testing <a class="anchor" href="#testing" aria-label="Link to this section">#</a></h2>
+
+<h3 id="android-testing">Android Testing <a class="anchor" href="#android-testing" aria-label="Link to this section">#</a></h3>
+
+<p><strong>1. Test on Emulator:</strong>
+<pre class="code"><code class="lang-bash"># Start emulator
+emulator -avd Pixel_6_API_34
+
+# Install app
+adb install app-debug.apk
+
+# Send mock location
+adb emu geo fix -0.1278 51.5074 0 # London coordinates
+</code></pre></p>
+
+<p><strong>2. Test on Real Device:</strong>
+<ul><li>Enable Developer Options (tap Build Number 7 times)</li><li>Enable USB Debugging</li><li>Connect via USB</li><li>Click Run in Android Studio</li></ul></p>
+
+<p><strong>3. Test Background Tracking:</strong>
+<ul><li>Install app</li><li>Grant location permissions (choose &quot;Always Allow&quot;)</li><li>Press Home button</li><li>Wait 15 minutes</li><li>Check dashboard for location update</li></ul></p>
+
+<p><strong>4. Test Battery Scenarios:</strong>
+<pre class="code"><code class="lang-bash"># Simulate low battery
+adb shell dumpsys battery set level 10
+
+# Reset battery
+adb shell dumpsys battery reset
+</code></pre></p>
+
+<h3 id="ios-testing">iOS Testing <a class="anchor" href="#ios-testing" aria-label="Link to this section">#</a></h3>
+
+<p><strong>1. Test on Simulator:</strong>
+<ul><li>Xcode → Product → Run</li><li>Debug → Location → Custom Location</li><li>Enter test coordinates</li></ul></p>
+
+<p><strong>2. Test on Real Device:</strong>
+<ul><li>Connect iPhone via USB</li><li>Trust computer on iPhone</li><li>Select device in Xcode</li><li>Click Run</li></ul></p>
+
+<p><strong>3. Test Background Mode:</strong>
+<ul><li>Xcode → Debug → Simulate Location</li><li>Choose &quot;City Run&quot; or &quot;City Bicycle Ride&quot;</li><li>Press Home button</li><li>App should continue tracking</li></ul></p>
+
+<h3 id="api-testing">API Testing <a class="anchor" href="#api-testing" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Test Registration:</strong>
+<pre class="code"><code class="lang-bash">curl -X POST https://phone-monitor.defecttracker.uk/api/register.php \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#039;{
+    &quot;device_id&quot;: &quot;test-device-123&quot;,
+    &quot;owner_name&quot;: &quot;Test User&quot;,
+    &quot;device_model&quot;: &quot;Android SDK&quot;,
+    &quot;os_version&quot;: &quot;13&quot;
+  }&#039;
+</code></pre></p>
+
+<p><strong>Test Location Update:</strong>
+<pre class="code"><code class="lang-bash">curl -X POST https://phone-monitor.defecttracker.uk/api/ping.php \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#039;{
+    &quot;device_id&quot;: &quot;test-device-123&quot;,
+    &quot;latitude&quot;: 51.5074,
+    &quot;longitude&quot;: -0.1278,
+    &quot;accuracy&quot;: 20,
+    &quot;battery_level&quot;: 85,
+    &quot;storage_free&quot;: 5000
+  }&#039;
+</code></pre></p>
+
+<hr />
+
+<h2 id="distribution">📦 Distribution <a class="anchor" href="#distribution" aria-label="Link to this section">#</a></h2>
+
+<h3 id="android-distribution-options">Android Distribution Options <a class="anchor" href="#android-distribution-options" aria-label="Link to this section">#</a></h3>
+
+<p><strong>1. Direct APK Distribution (Easiest)</strong>
+<ul><li>Build signed release APK</li><li>Upload to your website</li><li>Users download and install</li><li>✅ No approval process</li><li>✅ Free</li><li>⚠️ Users must enable &quot;Unknown Sources&quot;</li></ul></p>
+
+<p><strong>2. Google Play Store (Recommended for Public Release)</strong>
+<ul><li>Create Google Play Developer account ($25 one-time fee)</li><li>Upload app bundle (.aab)</li><li>Fill out store listing</li><li>Submit for review (1-7 days)</li><li>✅ Trusted source</li><li>✅ Auto-updates</li><li>❌ Review process</li></ul></p>
+
+<p><strong>3. Enterprise Distribution</strong>
+<ul><li>Upload to company server</li><li>Use Mobile Device Management (MDM)</li><li>Push to company devices</li><li>Good for family/corporate use</li></ul></p>
+
+<p><strong>Build App Bundle for Play Store:</strong>
+<pre class="code"><code class="lang-bash">cd android
+./gradlew bundleRelease
+
+# Output: android/app/build/outputs/bundle/release/app-release.aab
+</code></pre></p>
+
+<h3 id="ios-distribution-options">iOS Distribution Options <a class="anchor" href="#ios-distribution-options" aria-label="Link to this section">#</a></h3>
+
+<p><strong>1. TestFlight (Beta Testing)</strong>
+<ul><li>Upload to App Store Connect</li><li>Invite testers via email</li><li>Up to 10,000 beta testers</li><li>✅ Free</li><li>✅ Easy testing</li><li>❌ Still needs developer account</li></ul></p>
+
+<p><strong>2. App Store (Public Release)</strong>
+<ul><li>Submit via App Store Connect</li><li>Apple review process (1-7 days)</li><li>✅ Trusted source</li><li>✅ Auto-updates</li><li>❌ $99/year developer account</li><li>❌ Strict review guidelines</li></ul></p>
+
+<p><strong>3. Enterprise Distribution</strong>
+<ul><li>Requires Apple Enterprise Developer account ($299/year)</li><li>Distribute to organization only</li><li>Not for public distribution</li></ul></p>
+
+<p><strong>4. Ad Hoc Distribution (Testing)</strong>
+<ul><li>Register device UDIDs (up to 100 devices)</li><li>Build with Ad Hoc provisioning profile</li><li>Distribute via email/website</li><li>Good for family testing</li></ul></p>
+
+<hr />
+
+<h2 id="troubleshooting">🔧 Troubleshooting <a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a></h2>
+
+<h3 id="android-issues">Android Issues <a class="anchor" href="#android-issues" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Problem: Gradle sync failed</strong>
+<pre class="code"><code class="lang-">Solution:
+- File → Invalidate Caches → Invalidate and Restart
+- Delete .gradle folder in project root
+- Sync again
+</code></pre></p>
+
+<p><strong>Problem: App crashes on launch</strong>
+<pre class="code"><code class="lang-">Solution:
+- Check logcat in Android Studio
+- Common causes:
+  - API URL not configured
+  - Missing permissions in AndroidManifest.xml
+  - Network security config for HTTP (use HTTPS!)
+</code></pre></p>
+
+<p><strong>Problem: Location not updating</strong>
+<pre class="code"><code class="lang-">Solution:
+- Check location permission is &quot;Always Allow&quot;
+- Disable battery optimization for app
+- Settings → Apps → PhoneMonitor → Battery → Unrestricted
+</code></pre></p>
+
+<p><strong>Problem: Background service killed</strong>
+<pre class="code"><code class="lang-">Solution:
+- Enable foreground service (persistent notification)
+- Disable battery optimization
+- Check manufacturer-specific settings (Xiaomi, Huawei, etc.)
+</code></pre></p>
+
+<p><strong>Problem: &quot;Installation blocked&quot; error</strong>
+<pre class="code"><code class="lang-">Solution:
+- Enable &quot;Install Unknown Apps&quot;
+- Settings → Security → Install Unknown Apps
+- Select your browser/file manager
+- Toggle on
+</code></pre></p>
+
+<h3 id="ios-issues">iOS Issues <a class="anchor" href="#ios-issues" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Problem: &quot;Developer Mode required&quot;</strong>
+<pre class="code"><code class="lang-">Solution (iOS 16+):
+- Settings → Privacy &amp; Security → Developer Mode
+- Toggle on
+- Restart device
+</code></pre></p>
+
+<p><strong>Problem: Location permission denied</strong>
+<pre class="code"><code class="lang-">Solution:
+- Settings → Privacy → Location Services
+- Find PhoneMonitor
+- Choose &quot;Always&quot;
+</code></pre></p>
+
+<p><strong>Problem: App paused in background</strong>
+<pre class="code"><code class="lang-">Solution:
+- Add &quot;location&quot; to UIBackgroundModes in Info.plist
+- Set allowsBackgroundLocationUpdates = true
+- Use significant location changes for power efficiency
+</code></pre></p>
+
+<p><strong>Problem: Certificate errors</strong>
+<pre class="code"><code class="lang-">Solution:
+- Xcode → Preferences → Accounts
+- Sign in with Apple ID
+- Select team
+- Automatic signing enabled
+</code></pre></p>
+
+<h3 id="api-connection-issues">API Connection Issues <a class="anchor" href="#api-connection-issues" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Problem: Network error / Unable to connect</strong>
+<pre class="code"><code class="lang-">Solution:
+- Check API_BASE_URL is correct (must end with /)
+- Ensure server is accessible
+- Check CORS headers on server
+- Test API with curl/Postman
+</code></pre></p>
+
+<p><strong>Problem: SSL certificate errors</strong>
+<pre class="code"><code class="lang-">Solution:
+- Use HTTPS (not HTTP)
+- Ensure valid SSL certificate on server
+- Don&#039;t disable certificate validation in production!
+</code></pre></p>
+
+<hr />
+
+<h2 id="comparison-android-vs-ios-vs-cross-platform">📊 Comparison: Android vs iOS vs Cross-Platform <a class="anchor" href="#comparison-android-vs-ios-vs-cross-platform" aria-label="Link to this section">#</a></h2>
+
+<table><thead><tr><th>Feature</th><th>Android (Native)</th><th>iOS (Native)</th><th>React Native</th><th>Flutter</th></tr></thead><tbody><tr><td><strong>Development Time</strong></td><td>✅ Ready now</td><td>⚠️ Need to build</td><td>⚠️ Full rewrite</td><td>⚠️ Full rewrite</td></tr><tr><td><strong>Language</strong></td><td>Kotlin/Java</td><td>Swift/Obj-C</td><td>JavaScript</td><td>Dart</td></tr><tr><td><strong>Performance</strong></td><td>⭐⭐⭐⭐⭐ Excellent</td><td>⭐⭐⭐⭐⭐ Excellent</td><td>⭐⭐⭐⭐ Good</td><td>⭐⭐⭐⭐⭐ Excellent</td></tr><tr><td><strong>App Size</strong></td><td>8-12 MB</td><td>10-15 MB</td><td>20-30 MB</td><td>15-25 MB</td></tr><tr><td><strong>Battery Impact</strong></td><td>Low</td><td>Low</td><td>Medium</td><td>Low</td></tr><tr><td><strong>Maintenance</strong></td><td>2 codebases</td><td>2 codebases</td><td>1 codebase</td><td>1 codebase</td></tr><tr><td><strong>Learning Curve</strong></td><td>Medium</td><td>Medium</td><td>Low (if know JS)</td><td>Medium</td></tr><tr><td><strong>Community</strong></td><td>Huge</td><td>Huge</td><td>Large</td><td>Growing</td></tr><tr><td><strong>IDE</strong></td><td>Android Studio</td><td>Xcode</td><td>VS Code/Any</td><td>VS Code/Any</td></tr><tr><td><strong>Hot Reload</strong></td><td>❌ No</td><td>❌ No</td><td>✅ Yes</td><td>✅ Yes</td></tr><tr><td><strong>Native APIs</strong></td><td>✅ Direct</td><td>✅ Direct</td><td>⚠️ Via bridges</td><td>✅ Direct</td></tr><tr><td><strong>UI Quality</strong></td><td>Excellent</td><td>Excellent</td><td>Good</td><td>Excellent</td></tr></tbody></table>
+<hr />
+
+<h2 id="recommendations">🎯 Recommendations <a class="anchor" href="#recommendations" aria-label="Link to this section">#</a></h2>
+
+<h3 id="for-your-current-situation">For Your Current Situation: <a class="anchor" href="#for-your-current-situation" aria-label="Link to this section">#</a></h3>
+
+<p><strong>Immediate (This Week):</strong>
+<ol><li>✅ <strong>Use the Android app</strong> - It&#039;s ready and works great</li><li>Upload Android APK to your server for download</li><li>Test with Android family members first</li></ol></p>
+
+<p><strong>Short-term (Next Month):</strong>
+<ol><li>If you have a Mac, create basic iOS app using Swift guide above</li><li>Or hire iOS developer (Fiverr/Upwork: $500-2000)</li><li>Both apps use same backend API (already built!)</li></ol></p>
+
+<p><strong>Long-term (3-6 Months):</strong>
+<ol><li>Consider React Native or Flutter for easier maintenance</li><li>Single codebase = less work in future</li><li>Easier to add features to both platforms</li></ol></p>
+
+<h3 id="best-choice-for-most-users">Best Choice for Most Users: <a class="anchor" href="#best-choice-for-most-users" aria-label="Link to this section">#</a></h3>
+
+<p><strong>If you have Android devices only:</strong>
+<ul><li>✅ Use the existing Android app (ready now!)</li></ul></p>
+
+<p><strong>If you need iOS + Android:</strong>
+<ul><li>🥇 <strong>Option 1:</strong> Build simple native iOS app (1-2 weeks if you know Swift)</li><li>🥈 <strong>Option 2:</strong> Hire iOS developer ($500-2000)</li><li>🥉 <strong>Option 3:</strong> Rewrite in React Native/Flutter (4-8 weeks, but easier long-term)</li></ul></p>
+
+<p><strong>If you&#039;re a developer:</strong>
+<ul><li>Know Swift? → Build native iOS app</li><li>Know JavaScript? → Use React Native</li><li>Want best performance? → Use Flutter</li><li>Want fastest result? → Hire iOS developer</li></ul></p>
+
+<hr />
+
+<h2 id="additional-resources">📚 Additional Resources <a class="anchor" href="#additional-resources" aria-label="Link to this section">#</a></h2>
+
+<h3 id="android-development">Android Development <a class="anchor" href="#android-development" aria-label="Link to this section">#</a></h3>
+<ul><li>Official Docs: https://developer.android.com/docs</li><li>Kotlin Guide: https://kotlinlang.org/docs/home.html</li><li>Location Services: https://developer.android.com/training/location</li><li>Background Tasks: https://developer.android.com/guide/background</li></ul>
+
+<h3 id="ios-development">iOS Development <a class="anchor" href="#ios-development" aria-label="Link to this section">#</a></h3>
+<ul><li>Official Docs: https://developer.apple.com/documentation/</li><li>Swift Guide: https://docs.swift.org/swift-book/</li><li>Core Location: https://developer.apple.com/documentation/corelocation</li><li>Background Tasks: https://developer.apple.com/documentation/backgroundtasks</li></ul>
+
+<h3 id="cross-platform">Cross-Platform <a class="anchor" href="#cross-platform" aria-label="Link to this section">#</a></h3>
+<ul><li>React Native: https://reactnative.dev/</li><li>Flutter: https://flutter.dev/</li><li>Comparison: https://www.youtube.com/watch?v=X8ipUgXH6jw</li></ul>
+
+<h3 id="useful-tools">Useful Tools <a class="anchor" href="#useful-tools" aria-label="Link to this section">#</a></h3>
+<ul><li>Android Studio: https://developer.android.com/studio</li><li>Xcode: https://developer.apple.com/xcode/</li><li>Postman (API testing): https://www.postman.com/</li><li>Firebase (push notifications): https://firebase.google.com/</li></ul>
+
+<hr />
+
+<h2 id="quick-start-commands">🚀 Quick Start Commands <a class="anchor" href="#quick-start-commands" aria-label="Link to this section">#</a></h2>
+
+<h3 id="android-build-ready-now">Android Build (Ready Now!) <a class="anchor" href="#android-build-ready-now" aria-label="Link to this section">#</a></h3>
+<pre class="code"><code class="lang-bash"># Clone repo
+git clone https://github.com/irlam/PhoneMonitor.git
+cd PhoneMonitor/android
+
+# Open in Android Studio and click Run
+# Or build from command line:
+./gradlew assembleRelease
+
+# Output: android/app/build/outputs/apk/release/app-release.apk
+</code></pre>
+
+<h3 id="ios-build-requires-swift-development">iOS Build (Requires Swift Development) <a class="anchor" href="#ios-build-requires-swift-development" aria-label="Link to this section">#</a></h3>
+<pre class="code"><code class="lang-bash"># See &quot;iOS Build Guide&quot; section above
+# Requires Mac + Xcode + Swift code (not yet built)
+</code></pre>
+
+<h3 id="react-native-full-rewrite">React Native (Full Rewrite) <a class="anchor" href="#react-native-full-rewrite" aria-label="Link to this section">#</a></h3>
+<pre class="code"><code class="lang-bash">npx react-native init PhoneMonitor
+cd PhoneMonitor
+npm install @react-native-community/geolocation axios
+# Then implement app logic...
+</code></pre>
+
+<h3 id="flutter-full-rewrite">Flutter (Full Rewrite) <a class="anchor" href="#flutter-full-rewrite" aria-label="Link to this section">#</a></h3>
+<pre class="code"><code class="lang-bash">flutter create phonemonitor
+cd phonemonitor
+flutter pub add geolocator http permission_handler
+# Then implement app logic...
+</code></pre>
+
+<hr />
+
+<h2 id="next-steps">✅ Next Steps <a class="anchor" href="#next-steps" aria-label="Link to this section">#</a></h2>
+
+<ol><li><strong>Test Android app</strong> on your devices</li><li><strong>Decide on iOS strategy</strong> (native/cross-platform/hire developer)</li><li><strong>Configure API URL</strong> in app before building</li><li><strong>Create signing key</strong> for production releases</li><li><strong>Test thoroughly</strong> before distributing to family</li><li><strong>Set up analytics</strong> (optional - Firebase, Google Analytics)</li></ol>
+
+<hr />
+
+<p><strong>Need Help?</strong>
+<ul><li>Check existing code in <code class="inline">android/</code> folder</li><li>Test API with curl commands above</li><li>Review logs in Android Studio logcat</li><li>Ask specific questions about implementation</li></ul></p>
+
+<p><strong>Good luck building your apps! 🚀</strong></p>
+
+<hr />
+
+<h2 id="kotlin-multiplatform-kmm-eli5">🧩 Kotlin Multiplatform (KMM) – ELI5 <a class="anchor" href="#kotlin-multiplatform-kmm-eli5" aria-label="Link to this section">#</a></h2>
+
+<p>Think of KMM as “share the brains, customize the faces.” You write your app&#039;s logic (network calls, JSON parsing, math, rules) once in Kotlin, then plug that logic into two separate apps: an Android app and an iOS app. The screens (UI) are still built per platform, so they look and feel native.</p>
+
+<h3 id="what-you-get">What you get <a class="anchor" href="#what-you-get" aria-label="Link to this section">#</a></h3>
+<ul><li>One shared Kotlin module with your API client for <code class="inline">/api/register.php</code>, <code class="inline">/api/ping.php</code>, etc.</li><li>Android app uses the shared module directly</li><li>iOS app uses the shared module compiled as an iOS framework</li></ul>
+
+<h3 id="what-you-don-t-get-yet">What you don’t get (yet) <a class="anchor" href="#what-you-don-t-get-yet" aria-label="Link to this section">#</a></h3>
+<ul><li>A single “build once, get both apps” button. UIs are still separate. (There is Compose Multiplatform, but it’s still maturing for iOS. Good for devs, not ELI5-friendly yet.)</li></ul>
+
+<h3 id="step-by-step-beginner-friendly">Step-by-step (beginner friendly) <a class="anchor" href="#step-by-step-beginner-friendly" aria-label="Link to this section">#</a></h3>
+1) Install Android Studio (latest) on your computer
+  - Windows/Linux/macOS all okay
+2) Install Xcode on a Mac if you want to build the iOS app (Apple requires a Mac)
+3) In Android Studio: File → New → New Project → Search for “KMM” template
+  - If you don’t see it, install the “Kotlin Multiplatform” plugin
+4) Create a KMM project with:
+  - Shared module: Kotlin
+  - Android app: Kotlin
+  - iOS target: iOS framework (the template sets this up)
+5) In the shared module (usually <code class="inline">shared/src/commonMain</code>):
+  - Add a simple API client using Ktor or OkHttp (Ktor is cross-platform)
+  - Example pseudo-code:
+
+<p><pre class="code"><code class="lang-kotlin">// shared/src/commonMain/kotlin/com/pm/shared/Api.kt
+class Api(private val baseUrl: String) {
+   suspend fun register(deviceId: String, owner: String) { /* POST to /api/register.php */ }
+   suspend fun ping(lat: Double, lon: Double, battery: Int) { /* POST to /api/ping.php */ }
+}
+</code></pre></p>
+
+<p>6) Android app (the template includes one):
+  - Call the shared <code class="inline">Api</code> from Android ViewModel/Activity/Service
+  - Build APK and test
+7) iOS app:
+  - The KMM build generates an iOS framework (e.g., <code class="inline">Shared.framework</code>)
+  - Open the iOS sample in Xcode (the template creates it)
+  - Import the generated framework and call <code class="inline">Api</code> from Swift code
+  - Build and run on an iPhone or simulator</p>
+
+<h3 id="common-errors-and-quick-fixes">Common errors and quick fixes <a class="anchor" href="#common-errors-and-quick-fixes" aria-label="Link to this section">#</a></h3>
+<ul><li>“Xcode not found” → You must use a Mac to build/run iOS</li><li>“Framework not found Shared” → Rebuild KMM to regenerate the iOS framework, then re-add it to Xcode</li><li>“SSL/HTTP errors” → Ensure your API URL uses HTTPS and ends with <code class="inline">/api/</code></li><li>“Network on main thread” → Always call network code in a background coroutine (Kotlin) or async (Swift)</li><li>“App suspended in background” → Configure background location modes (Android foreground service; iOS background location)</li></ul>
+
+<h3 id="should-you-use-kmm">Should you use KMM? <a class="anchor" href="#should-you-use-kmm" aria-label="Link to this section">#</a></h3>
+<ul><li>If you want to share logic and keep native UIs → ✅ Good choice</li><li>If you want one codebase for everything including UI with minimal Apple tooling → Consider Flutter/React Native instead</li></ul>
+
+<h3 id="compose-multiplatform-optional">Compose Multiplatform (optional) <a class="anchor" href="#compose-multiplatform-optional" aria-label="Link to this section">#</a></h3>
+<ul><li>You can also try Compose Multiplatform to share UI, but it’s not as ELI5-friendly</li><li>Still evolving for iOS; great for developers who can handle occasional platform workarounds</li></ul>    </article>
+  </main>
+
+  <footer class="footer">
+    <small>Generated from <strong>MOBILE_APP_BUILD_GUIDE.md</strong>. This page auto-updates when the markdown changes.</small>
+  </footer>
+</body>
+</html>
