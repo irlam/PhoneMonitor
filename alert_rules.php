@@ -329,6 +329,7 @@ if (isset($_GET['edit'])) {
                                     <div class="condition-row">
                                         <select name="condition_field[]" class="form-control" required>
                                             <option value="">Select Field</option>
+                                            <option value="speed_mph" <?php echo $cond['field'] === 'speed_mph' ? 'selected' : ''; ?>>Speed (mph)</option>
                                             <option value="battery_level" <?php echo $cond['field'] === 'battery_level' ? 'selected' : ''; ?>>Battery Level (%)</option>
                                             <option value="storage_free_gb" <?php echo $cond['field'] === 'storage_free_gb' ? 'selected' : ''; ?>>Free Storage (GB)</option>
                                             <option value="offline_hours" <?php echo $cond['field'] === 'offline_hours' ? 'selected' : ''; ?>>Offline Hours</option>
@@ -359,6 +360,7 @@ if (isset($_GET['edit'])) {
                                 <div class="condition-row">
                                     <select name="condition_field[]" class="form-control" required>
                                         <option value="">Select Field</option>
+                                        <option value="speed_mph">Speed (mph)</option>
                                         <option value="battery_level">Battery Level (%)</option>
                                         <option value="storage_free_gb">Free Storage (GB)</option>
                                         <option value="offline_hours">Offline Hours</option>
@@ -536,7 +538,7 @@ if (isset($_GET['edit'])) {
                         <tbody>
                             <?php foreach ($recentTriggers as $trigger): ?>
                             <tr>
-                                <td><?php echo date('M d, H:i:s', strtotime($trigger['triggered_at'])); ?></td>
+                                <td><?php echo date('d/m/Y H:i:s', strtotime($trigger['triggered_at'])); ?></td>
                                 <td><?php echo htmlspecialchars($trigger['rule_name']); ?></td>
                                 <td><?php echo htmlspecialchars($trigger['owner_name']); ?></td>
                                 <td class="trigger-history"><?php echo htmlspecialchars($trigger['trigger_reason']); ?></td>

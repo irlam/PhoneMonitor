@@ -76,7 +76,7 @@ INSERT INTO alert_rules (name, device_id, rule_type, conditions, actions, enable
 ('Low Battery Alert', NULL, 'battery', '{"operator": "and", "rules": [{"field": "battery_level", "operator": "<", "value": 15}]}', '{"email": true, "telegram": true, "discord": true}', TRUE, 120),
 ('Critical Battery Alert', NULL, 'battery', '{"operator": "and", "rules": [{"field": "battery_level", "operator": "<", "value": 5}]}', '{"email": true, "telegram": true, "discord": true}', TRUE, 60),
 ('Device Offline 24h', NULL, 'offline', '{"operator": "and", "rules": [{"field": "offline_hours", "operator": ">", "value": 24}]}', '{"email": true, "telegram": true, "discord": false}', TRUE, 1440),
-('High Speed Alert', NULL, 'speed', '{"operator": "and", "rules": [{"field": "speed_kmh", "operator": ">", "value": 120}]}', '{"email": false, "telegram": true, "discord": false}', FALSE, 30);
+('High Speed Alert', NULL, 'speed', '{"operator": "and", "rules": [{"field": "speed_mph", "operator": ">", "value": 75}]}', '{"email": false, "telegram": true, "discord": false}', FALSE, 30);
 
 -- Add column to devices table for speed tracking (compat with MySQL 5.7+)
 SET @col_exists := (

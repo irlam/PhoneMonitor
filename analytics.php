@@ -221,7 +221,7 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
                                     </span>
                                 </td>
                                 <td><?php echo round($device['storage_free'] / 1073741824, 2); ?> GB</td>
-                                <td><?php echo date('M d, H:i', strtotime($device['last_seen'])); ?></td>
+                                <td><?php echo date('d/m/Y H:i', strtotime($device['last_seen'])); ?></td>
                                 <td><?php echo $device['weekly_updates']; ?></td>
                                 <td><?php echo $device['weekly_events']; ?></td>
                                 <td>
@@ -270,7 +270,7 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo $rule['trigger_count']; ?></td>
-                                <td><?php echo $rule['last_triggered'] ? date('M d, H:i', strtotime($rule['last_triggered'])) : 'Never'; ?></td>
+                                <td><?php echo $rule['last_triggered'] ? date('d/m/Y H:i', strtotime($rule['last_triggered'])) : 'Never'; ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>

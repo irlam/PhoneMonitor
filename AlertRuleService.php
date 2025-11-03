@@ -126,7 +126,11 @@ class AlertRuleService {
                 return (time() - strtotime($device['last_seen'])) / 60;
                 
             case 'speed_kmh':
+                // Stored value assumed in km/h
                 return $device['last_speed'] ?? 0;
+            case 'speed_mph':
+                // Convert km/h to mph for UK units
+                return round(($device['last_speed'] ?? 0) * 0.621371, 2);
                 
             case 'is_charging':
                 // Would need battery status from device

@@ -746,7 +746,7 @@ php cron_notifications.php
                         <li>📱 "If battery < 15% → Send Telegram alert" (default)</li>
                         <li>⏰ "If not at school by 9am on weekdays → Send alert"</li>
                         <li>🏠 "If left home zone after 10pm → Send Discord alert"</li>
-                        <li>🚗 "If speed > 120 km/h → Send instant alert"</li>
+                        <li>🚗 "If speed > 75 mph → Send instant alert"</li>
                         <li>💾 "If storage < 1GB → Send weekly reminder"</li>
                     </ul>
                     
@@ -767,7 +767,7 @@ php cron_notifications.php
                     <ul>
                         <li><strong>Battery Level:</strong> <, <=, >, >=, ==, !=</li>
                         <li><strong>Offline Time:</strong> Hours or minutes since last seen</li>
-                        <li><strong>Speed:</strong> Current speed in km/h</li>
+                        <li><strong>Speed:</strong> Current speed in mph</li>
                         <li><strong>Storage:</strong> Free storage in GB</li>
                         <li><strong>Time-based:</strong> Hour of day, day of week</li>
                     </ul>

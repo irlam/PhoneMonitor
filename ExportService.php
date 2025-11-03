@@ -107,7 +107,7 @@ class ExportService {
             'Longitude',
             'Accuracy (m)',
             'Altitude (m)',
-            'Speed (km/h)',
+            'Speed (mph)',
             'Provider',
             'Google Maps Link'
         ]);
@@ -134,13 +134,14 @@ class ExportService {
         foreach ($locations as $loc) {
             $mapsLink = "https://www.google.com/maps?q=" . $loc['latitude'] . "," . $loc['longitude'];
             
+            $speed_mph = isset($loc['speed']) ? round(((float)$loc['speed']) * 0.621371, 2) : 0;
             fputcsv($output, [
                 $loc['timestamp'],
                 $loc['latitude'],
                 $loc['longitude'],
                 $loc['accuracy'],
                 $loc['altitude'] ?? 0,
-                $loc['speed'] ?? 0,
+                $speed_mph,
                 $loc['provider'] ?? 'gps',
                 $mapsLink
             ]);
@@ -275,7 +276,8 @@ class ExportService {
         
         echo "Battery Level:  " . $device['battery_level'] . "%\n";
         echo "Storage Free:   " . round($device['storage_free'] / 1073741824, 2) . " GB\n";
-        echo "Last Speed:     " . ($device['last_speed'] ?? 0) . " km/h\n\n";
+    $lastSpeedMph = round(($device['last_speed'] ?? 0) * 0.621371, 2);
+    echo "Last Speed:     " . $lastSpeedMph . " mph\n\n";
         
         // Location stats
         $locationStats = db()->fetchOne("
