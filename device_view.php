@@ -241,6 +241,7 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
         
         <footer class="footer">
             <p>PhoneMonitor - Consent-based Family Device Helper</p>
+            <p><small>No access to personal data, messages, calls, or media · No keylogging, screenshots, or surveillance capabilities</small></p>
         </footer>
     </div>
 </body>

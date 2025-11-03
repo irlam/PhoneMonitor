@@ -77,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="login-help">
                 <p><small>Default credentials: admin / changeme123</small></p>
                 <p><small>Change password immediately after first login!</small></p>
+                <p style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;"><small><strong>Privacy First:</strong> No access to personal data, messages, calls, or media. No keylogging, screenshots, or surveillance capabilities.</small></p>
             </div>
         </div>
     </div>

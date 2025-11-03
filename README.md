@@ -38,9 +38,9 @@ This is NOT a stealth monitoring tool. PhoneMonitor is designed for **consensual
 ❌ **What it does NOT do:**
 - No stealth or hidden features
 - No remote control capabilities
-- No keylogging, screenshots, or surveillance
+- No keylogging, screenshots, or surveillance capabilities
 - No camera or microphone access
-- No access to messages, calls, or personal data
+- No access to personal data, messages, calls, or media
 
 ### Uninstallation
 Users can stop sharing at any time by:
