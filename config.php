@@ -58,6 +58,8 @@ define('DB_NAME', getenv('DB_NAME') ?: 'phone_monitor');
 define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 define('SESSION_NAME', getenv('SESSION_NAME') ?: 'pm_session');
+// Static asset cache-busting version (bump when CSS/JS changes)
+define('ASSET_VERSION', getenv('ASSET_VERSION') ?: '2');
 define('CSRF_KEY', getenv('CSRF_KEY') ?: 'change_this_key');
 define('REQUIRE_CONSENT', filter_var(getenv('REQUIRE_CONSENT') ?: 'true', FILTER_VALIDATE_BOOLEAN));
 define('GOOGLE_MAPS_API_KEY', getenv('GOOGLE_MAPS_API_KEY') ?: '');

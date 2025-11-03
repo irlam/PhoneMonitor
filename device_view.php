@@ -47,7 +47,7 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($device['display_name']); ?> - PhoneMonitor</title>
-    <link rel="stylesheet" href="/assets/css/site.css">
+    <link rel="stylesheet" href="assets/css/site.css?v=<?php echo urlencode(ASSET_VERSION); ?>">
     <?php if (GOOGLE_MAPS_API_KEY && $latestLocation): ?>
         <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo htmlspecialchars(GOOGLE_MAPS_API_KEY); ?>"></script>
     <?php endif; ?>

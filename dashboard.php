@@ -35,7 +35,7 @@ $devices = db()->fetchAll(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - PhoneMonitor</title>
-    <link rel="stylesheet" href="assets/css/site.css?v=2">
+    <link rel="stylesheet" href="assets/css/site.css?v=<?php echo urlencode(ASSET_VERSION); ?>">
 </head>
 <body>
     <div class="container">
