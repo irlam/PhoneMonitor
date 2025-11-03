@@ -3,8 +3,27 @@
 > **Consent-based family device monitoring with transparency and ethics at its core.**
 
 PhoneMonitor is a simple, transparent system for families to share basic device status information. It consists of:
-- **Web Dashboard** (PHP 8.3 + MySQL 8) for viewing device status
+- **Web Dashboard** (PHP 8.0+ + MySQL 8) for viewing device status with modern, responsive UI
 - **Android App** (Kotlin) for sharing device information
+
+🌐 **Live Demo:** [https://phone-monitor.defecttracker.uk](https://phone-monitor.defecttracker.uk)
+
+## ✨ Features
+
+### Dashboard
+- 📊 **Modern UI** - Dark gradient cards with glassmorphism effects
+- 📱 **Device Overview** - Real-time status of all registered devices
+- 🗺️ **Location Tracking** - Google Maps integration for location history
+- 📈 **Statistics Cards** - Total devices, online status, consent tracking
+- 🎨 **UK Date Formats** - All dates displayed in DD/MM/YYYY format
+- 🔐 **Secure Authentication** - Session-based login with CSRF protection
+
+### API Endpoints
+- `POST /api/register.php` - Register new devices
+- `POST /api/ping.php` - Device heartbeat with status updates  
+- `POST /api/unregister.php` - Device unregistration
+- ✅ **CORS Enabled** - Cross-origin support for mobile apps
+- 🛡️ **Rate Limiting** - Built-in protection against abuse
 
 ## 🎯 Purpose & Ethics
 
@@ -33,10 +52,11 @@ Users can stop sharing at any time by:
 ## 📋 Requirements
 
 ### Web Backend
-- PHP 8.3 or higher
+- PHP 8.0 or higher (tested with PHP 8.0.30)
 - MySQL 8.0 or higher
 - Apache/Nginx with mod_rewrite (or Plesk)
 - HTTPS (strongly recommended)
+- Modern browser with ES6+ support
 
 ### Android App
 - Android 6.0 (API 23) or higher
@@ -130,7 +150,18 @@ chmod 755 api/
    - Password: `changeme123`
 3. **IMPORTANT:** Change the password immediately!
 
-To generate a new password hash:
+**Or add a custom admin user:**
+```bash
+# Create add_user.php in your document root
+php -r "echo password_hash('YourSecurePassword', PASSWORD_DEFAULT);"
+# Copy the output hash
+
+# Then run SQL in phpMyAdmin:
+INSERT INTO users (username, password_hash, name) VALUES 
+('yourusername', 'paste_hash_here', 'Your Name');
+```
+
+To change an existing password:
 ```bash
 php -r "echo password_hash('your_new_password', PASSWORD_DEFAULT);"
 ```
@@ -138,6 +169,188 @@ php -r "echo password_hash('your_new_password', PASSWORD_DEFAULT);"
 Then update in database:
 ```sql
 UPDATE users SET password_hash = 'your_generated_hash' WHERE username = 'admin';
+```
+
+---
+
+## 🎨 UI Features
+
+### Modern Dashboard Design
+- **Glassmorphism effects** - Frosted glass cards with backdrop blur
+- **Dark gradient backgrounds** - Professional blue-teal color scheme
+- **Animated components** - Smooth hover effects and transitions
+- **Responsive layout** - Mobile-friendly grid system
+- **Status badges** - Color-coded device status (Online/Offline/Revoked)
+- **Real-time updates** - "Just now", "X minutes ago" timestamps
+
+### Card-Based Interface
+Each stat card features:
+- Icon box with gradient background
+- Category badge (DEVICES, STATUS, CONSENT, REVOKED)
+- Large number display
+- Descriptive text
+- Action button with hover effects
+
+---
+
+## 🌐 API Documentation
+
+### POST /api/register.php
+
+Register a new device or update existing registration.
+
+**Request:**
+```json
+{
+  "device_uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "display_name": "John's Phone",
+  "owner_name": "John Smith",
+  "consent": true
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Device registered",
+  "device_id": 1
+}
+```
+
+**Response (200 OK - Update):**
+```json
+{
+  "success": true,
+  "message": "Device updated",
+  "device_id": 1
+}
+```
+
+**Errors:**
+- `400` - Invalid JSON or missing required fields
+- `403` - Consent required or device revoked
+- `405` - Method not allowed (must use POST)
+- `429` - Rate limit exceeded (60 seconds between requests)
+- `500` - Internal server error
+
+---
+
+### POST /api/ping.php
+
+Send device heartbeat with status update.
+
+**Request:**
+```json
+{
+  "device_uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "battery": 85,
+  "free_storage": 25.5,
+  "note": "Everything running smoothly",
+  "lat": 51.5074,
+  "lon": -0.1278,
+  "accuracy": 10,
+  "provider": "gps",
+  "loc_ts": 1699012345000
+}
+```
+
+**Required fields:**
+- `device_uuid` - UUID of registered device
+
+**Optional fields:**
+- `battery` - Battery percentage (0-100)
+- `free_storage` - Free storage in GB
+- `note` - Status message
+- `lat` - Latitude (-90 to 90)
+- `lon` - Longitude (-180 to 180)
+- `accuracy` - GPS accuracy in meters
+- `provider` - Location provider (gps, network, fused)
+- `loc_ts` - Location timestamp in milliseconds
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Ping received",
+  "timestamp": "2025-11-03T14:30:45+00:00"
+}
+```
+
+**Errors:**
+- `400` - Invalid JSON or device not found
+- `403` - Device has been revoked
+- `405` - Method not allowed (must use POST)
+- `429` - Rate limit exceeded (10 seconds between pings)
+- `500` - Internal server error
+
+---
+
+### POST /api/unregister.php
+
+Unregister a device and stop sharing.
+
+**Request:**
+```json
+{
+  "device_uuid": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Device unregistered"
+}
+```
+
+**Errors:**
+- `400` - Invalid JSON or device not found
+- `405` - Method not allowed (must use POST)
+- `500` - Internal server error
+
+---
+
+## 🔧 Testing API Endpoints
+
+### Using curl
+
+**Register a device:**
+```bash
+curl -X POST https://your-domain.com/api/register.php \
+  -H "Content-Type: application/json" \
+  -d '{
+    "device_uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "display_name": "Test Device",
+    "owner_name": "Test User",
+    "consent": true
+  }'
+```
+
+**Send a ping:**
+```bash
+curl -X POST https://your-domain.com/api/ping.php \
+  -H "Content-Type: application/json" \
+  -d '{
+    "device_uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "battery": 85,
+    "free_storage": 25.5,
+    "note": "Test ping",
+    "lat": 51.5074,
+    "lon": -0.1278,
+    "accuracy": 10,
+    "provider": "gps"
+  }'
+```
+
+**Unregister a device:**
+```bash
+curl -X POST https://your-domain.com/api/unregister.php \
+  -H "Content-Type: application/json" \
+  -d '{
+    "device_uuid": "550e8400-e29b-41d4-a716-446655440000"
+  }'
 ```
 
 ---
@@ -303,9 +516,9 @@ DELETE FROM device_locations WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
 
 ### PHP version issues
 
-- Minimum required: PHP 8.3
+- Minimum required: PHP 8.0
 - Check current version: `php -v`
-- In Plesk: **PHP Settings** → Select PHP 8.3
+- In Plesk: **PHP Settings** → Select PHP 8.0 or higher
 
 ### Database charset errors
 
@@ -317,12 +530,10 @@ DELETE FROM device_locations WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
 
 - Verify server URL is correct (include `https://`)
 - Check firewall allows HTTPS traffic
-- Test API endpoints manually:
-  ```bash
-  curl -X POST https://your-domain.com/api/ping.php \
-    -H "Content-Type: application/json" \
-    -d '{"device_uuid":"test"}'
-  ```
+- Test API endpoints manually (see API Testing section above)
+- Check server logs: `/var/log/apache2/error.log` or Plesk logs
+- Verify CORS headers are being sent (check browser dev tools)
+- Rate limiting may be in effect - wait and retry
 
 ### Location not working on Android
 
