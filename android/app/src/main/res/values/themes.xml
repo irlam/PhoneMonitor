@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.PhoneMonitor" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#22bb66</item>
+        <item name="colorPrimaryVariant">#1a9950</item>
+        <item name="colorOnPrimary">#ffffff</item>
+        <item name="colorSecondary">#6c757d</item>
+        <item name="colorSecondaryVariant">#5a6268</item>
+        <item name="colorOnSecondary">#ffffff</item>
+    </style>
+    
+    <style name="Theme.PhoneMonitor.NoActionBar" parent="Theme.PhoneMonitor">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+</resources>

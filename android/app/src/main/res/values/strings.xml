@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">PhoneMonitor</string>
+    <string name="settings_title">Settings</string>
+    <string name="consent_title">Welcome to PhoneMonitor</string>
+    <string name="consent_message">This app shares device information with your family dashboard.\n\nShared information:\n• Device name and owner\n• Battery level\n• Free storage space\n• Last seen timestamp\n• Optional: Location (requires explicit permission)\n\nAll sharing is visible with a persistent notification.\n\nYou can uninstall the app at any time to stop sharing.</string>
+    <string name="consent_accept">I Understand and Agree</string>
+    <string name="consent_decline">Decline</string>
+    <string name="sharing_active">Family sharing active</string>
+    <string name="location_permission_rationale">Location sharing is optional but requires permission. You can disable it anytime in settings.</string>
+</resources>
