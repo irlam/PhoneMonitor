@@ -19,7 +19,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $action = $_POST['action'] ?? '';
         
-        if ($action === 'update_env') {
+        if ($action === 'test_email') {
+            // Send a test email
+            try {
+                require_once __DIR__ . '/NotificationService.php';
+                
+                $testEmail = trim($_POST['test_email_address'] ?? getenv('ADMIN_EMAIL') ?: '');
+                if (empty($testEmail)) {
+                    $message = ['type' => 'error', 'text' => 'Please provide an email address to test'];
+                } else {
+                    $testSubject = 'PhoneMonitor Test Email - ' . date('Y-m-d H:i:s');
+                    $testBody = "This is a test email from PhoneMonitor.\n\n";
+                    $testBody .= "✓ SMTP configuration is working correctly!\n\n";
+                    $testBody .= "Server Details:\n";
+                    $testBody .= "- SMTP Host: " . (getenv('SMTP_HOST') ?: '(not configured, using PHP mail)') . "\n";
+                    $testBody .= "- SMTP Port: " . (getenv('SMTP_PORT') ?: 'default') . "\n";
+                    $testBody .= "- From: " . (getenv('SMTP_FROM_EMAIL') ?: getenv('ADMIN_EMAIL') ?: 'noreply@localhost') . "\n";
+                    $testBody .= "- Timestamp: " . date('Y-m-d H:i:s') . "\n\n";
+                    $testBody .= "If you received this email, your email configuration is working properly!";
+                    
+                    // Queue the email
+                    NotificationService::queueEmail(
+                        $testEmail,
+                        $testSubject,
+                        $testBody,
+                        'test',
+                        null
+                    );
+                    
+                    // Immediately send it
+                    NotificationService::sendPending();
+                    
+                    $message = ['type' => 'success', 'text' => "Test email sent to {$testEmail}! Check your inbox (and spam folder)."];
+                }
+            } catch (Exception $e) {
+                $message = ['type' => 'error', 'text' => 'Failed to send test email: ' . $e->getMessage()];
+            }
+        } elseif ($action === 'update_env') {
             $envFile = __DIR__ . '/.env';
             $envContent = [];
             
@@ -360,58 +396,191 @@ mysql -u your_user -p phone_monitor < database/migrations/003_geofences.sql
                     </div>
 
                     <hr>
-                    <h4>SMTP (Optional, recommended)</h4>
-                    <p>Use your provider's SMTP to improve deliverability (example from your host: mxe97d.netcup.net, SSL/TLS on port 465).</p>
+                    <h4>📧 SMTP Email Configuration (Optional but Recommended)</h4>
+                    <p><strong>Why SMTP?</strong> Using your hosting provider's SMTP ensures emails actually get delivered instead of being marked as spam.</p>
+                    
+                    <div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3498db;">
+                        <h5 style="margin-top: 0;">📋 Your Hosting SMTP Details (from screenshot)</h5>
+                        <table style="width: 100%; font-size: 14px;">
+                            <tr>
+                                <td style="padding: 5px;"><strong>Outgoing Server:</strong></td>
+                                <td style="padding: 5px;">mxe97d.netcup.net</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px;"><strong>Port:</strong></td>
+                                <td style="padding: 5px;">465 (SSL/TLS)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px;"><strong>Username:</strong></td>
+                                <td style="padding: 5px;">phone-monitor@defecttracker.uk</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px;"><strong>Password:</strong></td>
+                                <td style="padding: 5px;">Your mailbox password</td>
+                            </tr>
+                        </table>
+                        <p style="margin-bottom: 0; margin-top: 10px;"><small>💡 <strong>Tip:</strong> Find your SMTP settings in Plesk → Mail → Email Addresses → Settings</small></p>
+                    </div>
+                    
                     <div class="form-group">
-                        <label for="smtp_host">SMTP Host</label>
-                        <input type="text" id="smtp_host" name="smtp_host" 
+                        <label for="smtp_host">SMTP Host <small>(e.g., mxe97d.netcup.net)</small></label>
+                        <input type="text" id="smtp_host" name="smtp_host" class="form-control"
                                value="<?php echo htmlspecialchars(getenv('SMTP_HOST') ?: ''); ?>" 
                                placeholder="mxe97d.netcup.net">
+                        <small>Your mail server hostname (found in Plesk mail settings)</small>
                     </div>
                     <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
                         <div>
                             <label for="smtp_port">SMTP Port</label>
-                            <input type="number" id="smtp_port" name="smtp_port" 
+                            <input type="number" id="smtp_port" name="smtp_port" class="form-control"
                                    value="<?php echo htmlspecialchars(getenv('SMTP_PORT') ?: '465'); ?>" 
                                    placeholder="465">
+                            <small>Usually 465 (SSL) or 587 (TLS)</small>
                         </div>
                         <div>
-                            <label for="smtp_secure">Security</label>
+                            <label for="smtp_secure">Encryption</label>
                             <select id="smtp_secure" name="smtp_secure" class="form-control">
                                 <?php $sec = strtolower(getenv('SMTP_SECURE') ?: 'ssl'); ?>
-                                <option value="ssl" <?php echo $sec==='ssl'?'selected':''; ?>>SSL (port 465)</option>
-                                <option value="tls" <?php echo $sec==='tls'?'selected':''; ?>>TLS (port 587)</option>
+                                <option value="ssl" <?php echo $sec==='ssl'?'selected':''; ?>>SSL (Port 465) ✓ Recommended</option>
+                                <option value="tls" <?php echo $sec==='tls'?'selected':''; ?>>TLS (Port 587)</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
                         <div>
-                            <label for="smtp_username">SMTP Username</label>
-                            <input type="text" id="smtp_username" name="smtp_username" 
+                            <label for="smtp_username">SMTP Username <small>(usually your email address)</small></label>
+                            <input type="text" id="smtp_username" name="smtp_username" class="form-control"
                                    value="<?php echo htmlspecialchars(getenv('SMTP_USERNAME') ?: ''); ?>" 
                                    placeholder="phone-monitor@defecttracker.uk">
                         </div>
                         <div>
-                            <label for="smtp_password">SMTP Password</label>
-                            <input type="password" id="smtp_password" name="smtp_password" 
+                            <label for="smtp_password">SMTP Password <small>(your mailbox password)</small></label>
+                            <input type="password" id="smtp_password" name="smtp_password" class="form-control"
                                    value="<?php echo htmlspecialchars(getenv('SMTP_PASSWORD') ?: ''); ?>" 
                                    placeholder="••••••••">
+                            <small>⚠️ Keep this secure! Never share or commit to Git</small>
                         </div>
                     </div>
                     <div class="form-group" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
                         <div>
-                            <label for="smtp_from_email">From Email</label>
-                            <input type="email" id="smtp_from_email" name="smtp_from_email" 
+                            <label for="smtp_from_email">From Email Address <small>(must match SMTP username)</small></label>
+                            <input type="email" id="smtp_from_email" name="smtp_from_email" class="form-control"
                                    value="<?php echo htmlspecialchars(getenv('SMTP_FROM_EMAIL') ?: ''); ?>" 
                                    placeholder="phone-monitor@defecttracker.uk">
                         </div>
                         <div>
-                            <label for="smtp_from_name">From Name</label>
-                            <input type="text" id="smtp_from_name" name="smtp_from_name" 
+                            <label for="smtp_from_name">From Name <small>(friendly display name)</small></label>
+                            <input type="text" id="smtp_from_name" name="smtp_from_name" class="form-control"
                                    value="<?php echo htmlspecialchars(getenv('SMTP_FROM_NAME') ?: 'PhoneMonitor'); ?>" 
                                    placeholder="PhoneMonitor">
                         </div>
                     </div>
+                    
+                    <div style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                        <h5 style="margin-top: 0;">🧪 Test Your SMTP Settings</h5>
+                        <p>After saving your configuration, send a test email to verify everything works:</p>
+                        <form method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <?php CSRF::field(); ?>
+                            <input type="hidden" name="action" value="test_email">
+                            <div style="flex: 1; min-width: 250px;">
+                                <label for="test_email_address">Test Email Address:</label>
+                                <input type="email" id="test_email_address" name="test_email_address" class="form-control"
+                                       value="<?php echo htmlspecialchars(getenv('ADMIN_EMAIL') ?: ''); ?>" 
+                                       placeholder="your@email.com" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary" style="white-space: nowrap;">📧 Send Test Email</button>
+                        </form>
+                        <small style="display: block; margin-top: 10px;">
+                            ℹ️ This will send immediately. Check your inbox and spam folder. If it fails, check the error message for troubleshooting clues.
+                        </small>
+                    </div>
+                    
+                    <details style="margin-bottom: 15px;">
+                        <summary style="cursor: pointer; font-weight: 600; padding: 10px; background: rgba(52, 152, 219, 0.1); border-radius: 6px;">
+                            📖 Common SMTP Providers & Settings
+                        </summary>
+                        <div style="padding: 15px; font-size: 14px;">
+                            <h5>Plesk/Netcup (like yours):</h5>
+                            <ul>
+                                <li>Host: Check Plesk → Mail settings (e.g., mxe97d.netcup.net)</li>
+                                <li>Port: 465 (SSL) or 587 (TLS)</li>
+                                <li>Username: Your full email address</li>
+                                <li>Password: Mailbox password</li>
+                            </ul>
+                            
+                            <h5>Gmail:</h5>
+                            <ul>
+                                <li>Host: smtp.gmail.com</li>
+                                <li>Port: 587 (TLS)</li>
+                                <li>Username: your@gmail.com</li>
+                                <li>Password: App-specific password (not your Gmail password!)</li>
+                                <li>ℹ️ Enable "Less secure app access" or create App Password</li>
+                            </ul>
+                            
+                            <h5>Office 365 / Outlook.com:</h5>
+                            <ul>
+                                <li>Host: smtp-mail.outlook.com</li>
+                                <li>Port: 587 (TLS)</li>
+                                <li>Username: your@outlook.com</li>
+                                <li>Password: Your account password</li>
+                            </ul>
+                            
+                            <h5>Generic cPanel Hosting:</h5>
+                            <ul>
+                                <li>Host: mail.yourdomain.com</li>
+                                <li>Port: 465 (SSL) or 587 (TLS)</li>
+                                <li>Username: Your email address</li>
+                                <li>Password: Email account password</li>
+                            </ul>
+                        </div>
+                    </details>
+                    
+                    <details style="margin-bottom: 15px;">
+                        <summary style="cursor: pointer; font-weight: 600; padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 6px;">
+                            🔧 Troubleshooting Email Issues
+                        </summary>
+                        <div style="padding: 15px; font-size: 14px;">
+                            <h5>❌ "Connection failed" error:</h5>
+                            <ul>
+                                <li>Verify SMTP host is correct (check Plesk/cPanel)</li>
+                                <li>Try both SSL (465) and TLS (587) ports</li>
+                                <li>Check firewall allows outbound connections on SMTP ports</li>
+                                <li>Some hosts block port 25 but allow 465/587</li>
+                            </ul>
+                            
+                            <h5>❌ "Authentication failed" error:</h5>
+                            <ul>
+                                <li>Double-check username (usually full email address)</li>
+                                <li>Verify password is correct (try logging into webmail)</li>
+                                <li>For Gmail: Use App Password, not regular password</li>
+                                <li>Ensure "From Email" matches SMTP username</li>
+                            </ul>
+                            
+                            <h5>❌ Email goes to spam:</h5>
+                            <ul>
+                                <li>Use your domain's email (not Gmail/Yahoo)</li>
+                                <li>Set up SPF/DKIM records (ask your host)</li>
+                                <li>Use proper From address matching your domain</li>
+                            </ul>
+                            
+                            <h5>❌ Test email not received:</h5>
+                            <ul>
+                                <li>Check spam/junk folder</li>
+                                <li>Look in email_notifications table for error_message</li>
+                                <li>Try different recipient email address</li>
+                                <li>Check server PHP error logs</li>
+                            </ul>
+                            
+                            <h5>💡 Still not working?</h5>
+                            <ul>
+                                <li>Leave SMTP fields empty to use PHP mail() function instead</li>
+                                <li>Contact your hosting provider for SMTP assistance</li>
+                                <li>Check PHP error logs: <code>tail -f /var/log/php-errors.log</code></li>
+                            </ul>
+                        </div>
+                    </details>
+                    
+                    <hr>
                     
                     <div class="form-group">
                         <label for="asset_version">Asset Version (Cache Busting)</label>
