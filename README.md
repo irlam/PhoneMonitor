@@ -8,6 +8,17 @@ PhoneMonitor is a simple, transparent system for families to share basic device 
 
 🌐 **Live Demo:** [https://phone-monitor.defecttracker.uk](https://phone-monitor.defecttracker.uk)
 
+## 🚀 Quick Navigation
+
+- Dashboard: [`/dashboard.php`](./dashboard.php)
+- Devices: [`/devices.php`](./devices.php)
+- Device Details: [`/device_view.php?id=<uuid>`](./device_view.php)
+- Analytics: [`/analytics.php`](./analytics.php)
+- Alert Rules: [`/alert_rules.php`](./alert_rules.php)
+- Setup & Help: [`/setup.php`](./setup.php)
+
+Tip: Start at Setup to configure `.env`, SMTP, Google Maps API key, and generate favicons.
+
 ## ✨ Features
 
 ### Dashboard
@@ -17,6 +28,15 @@ PhoneMonitor is a simple, transparent system for families to share basic device 
 - 📈 **Statistics Cards** - Total devices, online status, consent tracking
 - 🎨 **UK Date Formats** - All dates displayed in DD/MM/YYYY format
 - 🔐 **Secure Authentication** - Session-based login with CSRF protection
+
+### Phase 3 – Advanced Features
+- 📈 **Analytics Dashboard** (`/analytics.php`) – Battery trends, location activity, status distribution, geofence activity, device comparison
+- 📤 **CSV/PDF Export** – Devices CSV, Locations CSV (mph), Battery CSV, and text-based Device Reports
+- 🤖 **Bot Alerts** – Telegram/Discord notifications via bot/webhook configuration
+- 🔔 **Custom Alert Rules** – Battery, Speed (mph), Offline, Storage, and Custom JSON conditions with cooldowns
+- ✉️ **Email Notifications** – Native SMTP (SSL/TLS 465) with fallback to PHP mail; weekly digest supported
+- 🧠 **Caching** – Analytics cache for performance with manual “Clear Cache” on Analytics page
+- 🧭 **Speed in mph** – All speed analytics and exports show mph; threshold configurable via `.env`
 
 ### API Endpoints
 - `POST /api/register.php` - Register new devices
@@ -48,6 +68,156 @@ Users can stop sharing at any time by:
 2. Or simply uninstalling the app
 
 ---
+
+## 🧰 Setup & Help Wizard
+
+Visit `/setup.php` after deployment for a guided setup. The page provides:
+
+- ✅ System status checks (database, .env, SMTP, geofences, notifications, icons)
+- ⚙️ Configuration editor for `.env` (Site URL, Google Maps API key, Admin email, Asset version)
+- ✉️ SMTP configuration and a “Send Test Email” button with diagnostics
+- 🖼️ “Generate Favicons” button to rasterize `assets/icons/favicon.svg` into PNG fallbacks (16/32/180/192/512)
+- 📚 Feature guides for Analytics, Exports, Alerts, and Rules
+- 🔒 CSRF-protected forms and immediate `.env` reload after save
+
+Tip: The status grid shows green ✓ when icons are generated and SMTP is configured.
+
+---
+
+## 📊 Analytics Dashboard
+
+Open `/analytics.php` to view:
+
+- Battery trends (7 days), location updates (last 24h), device status distribution
+- Geofence activity (30 days) and per-device comparison (battery, storage, last seen, updates/events)
+- Buttons for Devices CSV, Battery CSV, and “Clear Cache”
+
+Dark mode is supported and persisted. Charts auto-refresh every 5 minutes.
+
+---
+
+## 📤 CSV/PDF Export
+
+Exports are handled by `/export.php`:
+
+- `type=devices_csv` – All devices with status, battery, storage
+- `type=locations_csv&device_id=<uuid>&days=<n>` – Location history with speed in mph and Google Maps links
+- `type=battery_csv[&device_id=<uuid>]` – Battery snapshots
+- `type=report_pdf&device_id=<uuid>` – Text-based device report (last 30 days)
+
+Export activity is logged in `export_history`. CSVs include UTF‑8 BOM for Excel compatibility.
+
+---
+
+## 🔔 Custom Alert Rules & Bot Alerts
+
+Create and manage rules at `/alert_rules.php`:
+
+- Rule types: `battery`, `speed` (mph), `offline`, `storage`, `location`, `custom`
+- JSON-based conditions with AND/OR, value comparisons, and cooldown minutes
+- Actions: email, Telegram bot, Discord webhook
+- Recent triggers table with timestamps and reasons
+
+Configure bots in the “Bot Config” section. Telegram uses a bot token + chat ID; Discord uses a webhook URL.
+
+---
+
+## ✉️ Email (SMTP)
+
+Native SMTP is built in (SSL/TLS 465) with AUTH LOGIN and plaintext fallback to `mail()` if not configured.
+
+`.env` keys:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=ssl
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+SMTP_FROM_EMAIL=noreply@yoursite.com
+SMTP_FROM_NAME=PhoneMonitor
+```
+
+Use `/setup.php` → “Send Test Email” to validate delivery and review diagnostics.
+
+Weekly digest emails can be enabled via cron (see below).
+
+---
+
+## 🎨 Favicon & App Icons
+
+- Primary icon: `assets/icons/favicon.svg` (used directly as SVG in modern browsers)
+- Generate PNG fallbacks via `/setup.php` → “Generate Favicons”
+  - Creates: `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png` (180x180), `android-chrome-192x192.png`, `android-chrome-512x512.png`
+- Web manifest: `assets/icons/site.webmanifest`
+- Android adaptive icons included under `AndroidStudioProject/PhoneMonitor/app/src/main/res/`
+- iOS icon export guide: `mobile-icons/ios/README.md`
+
+Server requirements for generation: GD or Imagick (SVG → PNG). Both are supported.
+
+---
+
+## 🗄️ Database & Migrations
+
+You can bootstrap the schema in two ways:
+
+1) Full install:
+
+```bash
+mysql -u user -p phone_monitor < install.sql
+```
+
+2) Versioned migrations (recommended for upgrades):
+
+```bash
+mysql -u user -p phone_monitor < database/migrations/003_geofences.sql
+mysql -u user -p phone_monitor < database/migrations/004_phase3_features.sql
+mysql -u user -p phone_monitor < database/migrations/005_fix_collations.sql   # optional uniform collation
+```
+
+Notes:
+- Migrations use version-safe conditional `ALTER` logic for MySQL 5.7+/8.0 compatibility
+- Where legacy collations exist, the runtime applies `COLLATE utf8mb4_unicode_ci` on JOINs; `005_fix_collations.sql` standardizes schema permanently
+- Device identifiers are UUIDs; compatibility columns exist for older records
+
+---
+
+## 🏎️ Speed (mph) & UK Formats
+
+- All speed analytics and exports use mph (km/h × 0.621371)
+- Configurable threshold for highlighting averages:
+
+```env
+SPEED_AVG_THRESHOLD_MPH=75
+```
+
+- Frontend dates use UK format (DD/MM/YYYY HH:MM). Internal logs/exports use ISO `Y-m-d H:i:s`.
+
+---
+
+## ⏱️ Cron Jobs
+
+Add these to your crontab (`crontab -e`) to enable background processing:
+
+```bash
+*/5 * * * * /usr/bin/php /path/to/PhoneMonitor/cron_notifications.php >> /var/log/pm_notifications.log 2>&1
+*/5 * * * * /usr/bin/php /path/to/PhoneMonitor/cron_alert_rules.php >> /var/log/pm_alerts.log 2>&1
+0 9 * * 0 /usr/bin/php /path/to/PhoneMonitor/cron_weekly_report.php >> /var/log/pm_weekly.log 2>&1
+```
+
+These send pending emails, evaluate alert rules, and deliver a weekly digest.
+
+---
+
+## 📚 Mobile Build Guide
+
+See `MOBILE_BUILD_GUIDE.md` for Android build instructions and packaging. Update your server URL in the app before building.
+
+---
+
+## ✅ Production Checklist
+
+For a concise, step-by-step launch checklist, see `PRODUCTION_CHECKLIST.md`.
 
 ## 📋 Requirements
 
@@ -603,3 +773,27 @@ See [SECURITY.md](SECURITY.md) for security policy and reporting vulnerabilities
 ---
 
 **Remember:** This tool is for consensual family use only. Always be transparent about what data is being collected and ensure users understand they can stop sharing at any time.
+
+---
+
+## 🖼️ Screenshots (optional)
+
+You can include screenshots to help users understand the UI:
+
+- Create a folder `docs/screenshots/`
+- Suggested filenames:
+  - `dashboard.png`
+  - `device-view.png`
+  - `analytics.png`
+  - `alert-rules.png`
+  - `setup.png`
+
+Then embed them in this README, for example:
+
+```markdown
+![Dashboard](docs/screenshots/dashboard.png)
+![Device View](docs/screenshots/device-view.png)
+![Analytics](docs/screenshots/analytics.png)
+![Alert Rules](docs/screenshots/alert-rules.png)
+![Setup](docs/screenshots/setup.png)
+```
