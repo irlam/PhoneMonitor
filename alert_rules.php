@@ -117,7 +117,7 @@ $rules = AlertRuleService::getAllRules();
 $recentTriggers = AlertRuleService::getRecentTriggers(20);
 
 // Get devices for dropdown
-$devices = db()->query("SELECT device_id, owner_name, display_name FROM devices WHERE consent_given = TRUE ORDER BY owner_name")->fetchAll();
+$devices = db()->query("SELECT device_uuid as device_id, owner_name, display_name FROM devices WHERE consent_given = TRUE ORDER BY owner_name")->fetchAll();
 
 // Get rule for editing
 $editRule = null;

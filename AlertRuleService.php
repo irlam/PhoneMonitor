@@ -305,7 +305,7 @@ class AlertRuleService {
         return db()->fetchAll("
             SELECT ar.*, d.owner_name
             FROM alert_rules ar
-            LEFT JOIN devices d ON ar.device_id = d.device_id
+            LEFT JOIN devices d ON ar.device_id = d.device_uuid
             ORDER BY ar.enabled DESC, ar.name ASC
         ");
     }
