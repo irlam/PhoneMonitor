@@ -39,8 +39,9 @@ class AlertRuleService {
         
         // Get devices to check
         $devices = [];
-        if ($rule['device_id']) {
-            $device = db()->fetchOne("SELECT * FROM devices WHERE device_id = ?", [$rule['device_id']]);
+            if ($rule['device_id']) {
+                // device_id in rules stores the UUID string; production schema uses device_uuid
+                $device = db()->fetchOne("SELECT * FROM devices WHERE device_uuid = ?", [$rule['device_id']]);
             if ($device) {
                 $devices[] = $device;
             }
@@ -169,7 +170,8 @@ class AlertRuleService {
                     'Alert: ' . $rule['name'],
                     $reason,
                     'custom_alert',
-                    $device['device_id']
+                    // email_notifications.device_id expects the numeric devices.id
+                    $device['id']
                 );
                 $actionsTaken['email'] = true;
             } catch (Exception $e) {
@@ -211,7 +213,7 @@ class AlertRuleService {
             VALUES (?, ?, ?, ?)
         ", [
             $rule['id'],
-            $device['device_id'],
+                $device['device_uuid'],
             $reason,
             json_encode($actionsTaken)
         ]);
@@ -323,7 +325,7 @@ class AlertRuleService {
             SELECT art.*, ar.name as rule_name, d.owner_name
             FROM alert_rule_triggers art
             JOIN alert_rules ar ON art.alert_rule_id = ar.id
-            JOIN devices d ON art.device_id = d.device_id
+                JOIN devices d ON art.device_id = d.device_uuid
             ORDER BY art.triggered_at DESC
             LIMIT ?
         ", [$limit]);
