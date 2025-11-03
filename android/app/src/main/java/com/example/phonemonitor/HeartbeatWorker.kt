@@ -115,7 +115,11 @@ class HeartbeatWorker(
 
     private fun getFreeStorage(): String {
         val stat = StatFs(Environment.getDataDirectory().path)
-        val bytesAvailable = stat.blockSizeLong * stat.availableBlocksLong
+        val bytesAvailable = try {
+            stat.blockSizeLong * stat.availableBlocksLong
+        } catch (e: ArithmeticException) {
+            return "999GB+" // Overflow case
+        }
         val megabytes = bytesAvailable / (1024 * 1024)
         val gigabytes = megabytes / 1024
 

@@ -60,8 +60,11 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert default admin user
--- Default password is 'admin123' - CHANGE THIS IMMEDIATELY
--- To generate a new password hash in PHP: echo password_hash('your_password', PASSWORD_DEFAULT);
+-- Default password is 'admin123' - THIS IS INTENTIONALLY WEAK FOR DEMO PURPOSES
+-- ⚠️ CRITICAL SECURITY: CHANGE THIS PASSWORD IMMEDIATELY AFTER INSTALLATION! ⚠️
+-- To generate a new password hash in PHP: 
+--   php -r "echo password_hash('your_secure_password', PASSWORD_DEFAULT);"
+-- Then update: UPDATE users SET password_hash = 'new_hash' WHERE username = 'admin';
 INSERT INTO users (username, password_hash, name) VALUES 
 ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator')
 ON DUPLICATE KEY UPDATE username=username;

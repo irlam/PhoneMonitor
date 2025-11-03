@@ -113,7 +113,7 @@ try {
         ];
         
         // Insert location record
-        $locTsFormatted = $locTs ? date('Y-m-d H:i:s', $locTs / 1000) : null;
+        $locTsFormatted = ($locTs && $locTs > 0) ? date('Y-m-d H:i:s', $locTs / 1000) : null;
         executeQuery(
             "INSERT INTO device_locations (device_id, lat, lon, accuracy, provider, loc_ts) VALUES (?, ?, ?, ?, ?, ?)",
             [$device['id'], $lat, $lon, $accuracy, $provider, $locTsFormatted]
