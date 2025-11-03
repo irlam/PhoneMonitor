@@ -82,6 +82,8 @@ $devices = db()->fetchAll("SELECT id, display_name FROM devices ORDER BY display
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php">All Devices</a>
             <a href="/geofences.php" class="active">Geofences</a>
+            <a href="/analytics.php">Analytics</a>
+            <a href="/alert_rules.php">Alert Rules</a>
             <a href="/setup.php">Setup & Help</a>
         </nav>
         

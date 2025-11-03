@@ -74,22 +74,33 @@ $payload = $device['last_payload'] ? json_decode($device['last_payload'], true) 
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php">All Devices</a>
             <a href="/geofences.php">Geofences</a>
+            <a href="/analytics.php">Analytics</a>
+            <a href="/alert_rules.php">Alert Rules</a>
             <a href="/setup.php">Setup & Help</a>
         </nav>
         
         <main class="main-content">
             <div class="page-header">
                 <h2><?php echo htmlspecialchars($device['display_name']); ?></h2>
-                <div>
-                    <?php if ($device['revoked']): ?>
-                        <span class="badge badge-danger">Revoked</span>
-                    <?php else: ?>
-                        <span class="badge badge-success">Active</span>
-                    <?php endif; ?>
-                    <?php if ($device['consent_given']): ?>
-                        <span class="badge badge-success">Consent Given</span>
-                    <?php endif; ?>
+                <div class="header-actions">
+                    <a href="/export.php?type=locations_csv&device_id=<?php echo urlencode($device['device_id']); ?>&days=<?php echo $filterDays; ?>" class="btn btn-secondary" style="margin-right: 10px;">
+                        📊 Export Locations CSV
+                    </a>
+                    <a href="/export.php?type=report_pdf&device_id=<?php echo urlencode($device['device_id']); ?>" class="btn btn-secondary">
+                        📄 Generate Report
+                    </a>
                 </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <?php if ($device['revoked']): ?>
+                    <span class="badge badge-danger">Revoked</span>
+                <?php else: ?>
+                    <span class="badge badge-success">Active</span>
+                <?php endif; ?>
+                <?php if ($device['consent_given']): ?>
+                    <span class="badge badge-success">Consent Given</span>
+                <?php endif; ?>
             </div>
             
             <div class="device-details">

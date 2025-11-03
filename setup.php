@@ -169,6 +169,8 @@ $setupComplete = $status['database'] && $status['geofences_table'] && $status['n
             <a href="/dashboard.php">Dashboard</a>
             <a href="/devices.php">All Devices</a>
             <a href="/geofences.php">Geofences</a>
+            <a href="/analytics.php">Analytics</a>
+            <a href="/alert_rules.php">Alert Rules</a>
             <a href="/setup.php" class="active">Setup & Help</a>
         </nav>
         
@@ -391,6 +393,82 @@ mysql -u your_user -p phone_monitor < database/migrations/003_geofences.sql
                 </ol>
             </div>
             
+            <!-- Step 5: Phase 3 Advanced Features (Optional) -->
+            <div class="setup-step">
+                <h3>
+                    <span>5️⃣</span>
+                    Phase 3 Advanced Features (Optional)
+                </h3>
+                
+                <p>Advanced features including Analytics, CSV/PDF Export, Telegram/Discord Alerts, and Custom Alert Rules are now available!</p>
+                
+                <h4 style="margin-top: 20px;">📊 Step 5a: Install Phase 3 Database Tables</h4>
+                <p>Run the Phase 3 migration to enable analytics, bot alerts, and custom rules:</p>
+                <div class="code-block">
+mysql -u your_user -p phone_monitor < database/migrations/004_phase3_features.sql
+                </div>
+                <p>Or via phpMyAdmin: Execute the contents of <code>database/migrations/004_phase3_features.sql</code></p>
+                
+                <h4 style="margin-top: 20px;">💬 Step 5b: Configure Telegram Bot (Optional)</h4>
+                <p><strong>What it does:</strong> Send instant alerts to Telegram when battery is low, devices go offline, or geofence events occur.</p>
+                
+                <p><strong>Setup Instructions:</strong></p>
+                <ol>
+                    <li>Open Telegram and search for <strong>@BotFather</strong></li>
+                    <li>Send <code>/newbot</code> command</li>
+                    <li>Follow prompts to create your bot and get the <strong>Bot Token</strong></li>
+                    <li>Start a chat with your new bot</li>
+                    <li>Get your <strong>Chat ID</strong>:
+                        <ul>
+                            <li>Search for <strong>@userinfobot</strong> on Telegram</li>
+                            <li>Start chat and it will show your Chat ID</li>
+                        </ul>
+                    </li>
+                    <li>Insert bot configuration into database:</li>
+                </ol>
+                
+                <div class="code-block">
+INSERT INTO bot_config (bot_type, config, enabled) VALUES<br>
+('telegram', '{"bot_token":"YOUR_BOT_TOKEN","chat_id":"YOUR_CHAT_ID"}', 1);
+                </div>
+                
+                <p><strong>Test your bot:</strong> Visit the Alert Rules page and send a test message!</p>
+                
+                <h4 style="margin-top: 20px;">📢 Step 5c: Configure Discord Webhook (Optional)</h4>
+                <p><strong>What it does:</strong> Send alerts to Discord channel for team/family monitoring.</p>
+                
+                <p><strong>Setup Instructions:</strong></p>
+                <ol>
+                    <li>Open Discord and go to your server</li>
+                    <li>Select a channel → Click ⚙️ Settings</li>
+                    <li>Go to <strong>Integrations</strong> → <strong>Webhooks</strong></li>
+                    <li>Click <strong>New Webhook</strong></li>
+                    <li>Name it "PhoneMonitor" and copy the <strong>Webhook URL</strong></li>
+                    <li>Insert webhook configuration:</li>
+                </ol>
+                
+                <div class="code-block">
+INSERT INTO bot_config (bot_type, config, enabled) VALUES<br>
+('discord', '{"webhook_url":"YOUR_WEBHOOK_URL"}', 1);
+                </div>
+                
+                <h4 style="margin-top: 20px;">⏰ Step 5d: Add Alert Rules Cron Job</h4>
+                <p>Enable automatic evaluation of custom alert rules:</p>
+                <div class="code-block">
+*/5 * * * * php /path/to/PhoneMonitor/cron_alert_rules.php
+                </div>
+                <p>This runs every 5 minutes to check if any alert rule conditions are met.</p>
+                
+                <h4 style="margin-top: 20px;">📊 Step 5e: Access New Features</h4>
+                <p>Once Phase 3 is installed, you can access:</p>
+                <ul>
+                    <li><strong>Analytics Dashboard:</strong> <a href="/analytics.php">/analytics.php</a> - Charts, graphs, and device insights</li>
+                    <li><strong>Alert Rules:</strong> <a href="/alert_rules.php">/alert_rules.php</a> - Create custom alert conditions</li>
+                    <li><strong>CSV Export:</strong> Export buttons on Dashboard and Device pages</li>
+                    <li><strong>PDF Reports:</strong> Generate device reports from device detail pages</li>
+                </ul>
+            </div>
+            
             <!-- User Guide -->
             <div class="section-header" style="margin-top: 50px;">
                 <h3>📖 User Guide</h3>
@@ -523,6 +601,184 @@ mysql -u your_user -p phone_monitor < database/migrations/003_geofences.sql
                     <div class="code-block">
 php cron_notifications.php
                     </div>
+                </div>
+            </div>
+            
+            <!-- Feature: Analytics Dashboard (Phase 3) -->
+            <div class="card" style="margin-bottom: 20px; border-left: 4px solid #3498db;">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));">
+                    <h3 class="card-title">📊 Analytics Dashboard (Phase 3)</h3>
+                </div>
+                <div class="card-body">
+                    <h4>Visual Insights & Statistics:</h4>
+                    <p>The analytics dashboard provides charts, graphs, and statistical analysis of your device data.</p>
+                    
+                    <h4>Features:</h4>
+                    <ul>
+                        <li><strong>Battery Trends:</strong> Line charts showing battery levels over time</li>
+                        <li><strong>Activity Timeline:</strong> Location updates per hour/day visualization</li>
+                        <li><strong>Location Heatmap:</strong> See where devices spend most time</li>
+                        <li><strong>Device Comparison:</strong> Compare multiple devices side-by-side</li>
+                        <li><strong>Geofence Statistics:</strong> Entry/exit events per zone</li>
+                        <li><strong>Alert Rule Stats:</strong> Which rules trigger most often</li>
+                    </ul>
+                    
+                    <h4>How to Use:</h4>
+                    <ol>
+                        <li>Navigate to <strong>Analytics</strong> in the menu</li>
+                        <li>View overall statistics at the top</li>
+                        <li>Scroll through interactive charts</li>
+                        <li>Click on devices to filter specific device data</li>
+                        <li>Charts auto-refresh every 5 minutes</li>
+                    </ol>
+                    
+                    <h4>Requirements:</h4>
+                    <ul>
+                        <li>✅ Phase 3 database migration (004_phase3_features.sql)</li>
+                        <li>✅ Modern browser with JavaScript enabled</li>
+                        <li>✅ At least 1 week of device data for meaningful charts</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Feature: CSV/PDF Export (Phase 3) -->
+            <div class="card" style="margin-bottom: 20px; border-left: 4px solid #2ecc71;">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1));">
+                    <h3 class="card-title">📊 CSV/PDF Export (Phase 3)</h3>
+                </div>
+                <div class="card-body">
+                    <h4>Export Your Data:</h4>
+                    <p>Download device data in CSV or PDF format for backup, analysis, or sharing.</p>
+                    
+                    <h4>Available Exports:</h4>
+                    <ul>
+                        <li><strong>Devices CSV:</strong> All devices with current status, battery, storage</li>
+                        <li><strong>Locations CSV:</strong> Complete location history with coordinates, timestamps, accuracy</li>
+                        <li><strong>Battery CSV:</strong> Battery level history for trend analysis</li>
+                        <li><strong>Device Report (TXT):</strong> Comprehensive device report with statistics</li>
+                    </ul>
+                    
+                    <h4>How to Export:</h4>
+                    <ol>
+                        <li><strong>All Devices:</strong> Click "Export Devices CSV" button on Dashboard</li>
+                        <li><strong>Device Locations:</strong> Open device details → Click "Export Locations CSV"</li>
+                        <li><strong>Device Report:</strong> Open device details → Click "Generate Report"</li>
+                        <li>File downloads automatically</li>
+                        <li>Open in Excel, Google Sheets, or any text editor</li>
+                    </ol>
+                    
+                    <h4>Use Cases:</h4>
+                    <ul>
+                        <li>📁 Backup data offline for long-term storage</li>
+                        <li>📈 Analyze trends in Excel/Google Sheets</li>
+                        <li>📄 Generate printable reports for documentation</li>
+                        <li>🔍 Forensic analysis of historical data</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Feature: Telegram/Discord Alerts (Phase 3) -->
+            <div class="card" style="margin-bottom: 20px; border-left: 4px solid #9b59b6;">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(142, 68, 173, 0.1));">
+                    <h3 class="card-title">💬 Telegram/Discord Alerts (Phase 3)</h3>
+                </div>
+                <div class="card-body">
+                    <h4>Instant Notifications:</h4>
+                    <p>Receive alerts directly in Telegram or Discord - faster and more convenient than email!</p>
+                    
+                    <h4>Alert Types:</h4>
+                    <ul>
+                        <li>🔋 <strong>Low Battery:</strong> When battery drops below 15%</li>
+                        <li>📵 <strong>Device Offline:</strong> When device hasn't reported for 24+ hours</li>
+                        <li>📍 <strong>Geofence Events:</strong> When device enters/exits zones</li>
+                        <li>⚠️ <strong>Custom Alerts:</strong> From your custom alert rules</li>
+                    </ul>
+                    
+                    <h4>Setup - Telegram:</h4>
+                    <ol>
+                        <li>Open Telegram → Search @BotFather</li>
+                        <li>Send <code>/newbot</code> and follow prompts</li>
+                        <li>Get your Bot Token</li>
+                        <li>Search @userinfobot to get your Chat ID</li>
+                        <li>Add to database (see Step 5b in setup above)</li>
+                        <li>Test from Alert Rules page!</li>
+                    </ol>
+                    
+                    <h4>Setup - Discord:</h4>
+                    <ol>
+                        <li>Open Discord → Server Settings → Integrations</li>
+                        <li>Click Webhooks → New Webhook</li>
+                        <li>Name it "PhoneMonitor"</li>
+                        <li>Copy Webhook URL</li>
+                        <li>Add to database (see Step 5c in setup above)</li>
+                        <li>Test from Alert Rules page!</li>
+                    </ol>
+                    
+                    <h4>Benefits:</h4>
+                    <ul>
+                        <li>⚡ Instant delivery (faster than email)</li>
+                        <li>📱 Mobile-friendly (always have your phone)</li>
+                        <li>🔕 Less spam than email</li>
+                        <li>👥 Share with family/team in group chats</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Feature: Custom Alert Rules (Phase 3) -->
+            <div class="card" style="margin-bottom: 20px; border-left: 4px solid #e74c3c;">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));">
+                    <h3 class="card-title">🔔 Custom Alert Rules (Phase 3)</h3>
+                </div>
+                <div class="card-body">
+                    <h4>Smart Automation:</h4>
+                    <p>Create custom conditions that trigger alerts automatically - no manual monitoring needed!</p>
+                    
+                    <h4>How Alert Rules Work:</h4>
+                    <p>Each rule has:</p>
+                    <ul>
+                        <li><strong>Conditions:</strong> What to check (battery < 20%, offline > 2 hours, etc.)</li>
+                        <li><strong>Actions:</strong> What to do (send email, Telegram, Discord)</li>
+                        <li><strong>Cooldown:</strong> Wait time before triggering again (prevents spam)</li>
+                    </ul>
+                    
+                    <h4>Example Rules:</h4>
+                    <ul>
+                        <li>📱 "If battery < 15% → Send Telegram alert" (default)</li>
+                        <li>⏰ "If not at school by 9am on weekdays → Send alert"</li>
+                        <li>🏠 "If left home zone after 10pm → Send Discord alert"</li>
+                        <li>🚗 "If speed > 120 km/h → Send instant alert"</li>
+                        <li>💾 "If storage < 1GB → Send weekly reminder"</li>
+                    </ul>
+                    
+                    <h4>How to Create:</h4>
+                    <ol>
+                        <li>Go to <strong>Alert Rules</strong> page</li>
+                        <li>Click <strong>Create New Rule</strong></li>
+                        <li>Enter rule name (e.g., "Night Curfew Alert")</li>
+                        <li>Select device (or "All Devices")</li>
+                        <li>Choose rule type (battery, location, offline, etc.)</li>
+                        <li>Set conditions (field, operator, value)</li>
+                        <li>Choose alert actions (email, Telegram, Discord)</li>
+                        <li>Set cooldown period</li>
+                        <li>Click <strong>Save</strong></li>
+                    </ol>
+                    
+                    <h4>Available Conditions:</h4>
+                    <ul>
+                        <li><strong>Battery Level:</strong> <, <=, >, >=, ==, !=</li>
+                        <li><strong>Offline Time:</strong> Hours or minutes since last seen</li>
+                        <li><strong>Speed:</strong> Current speed in km/h</li>
+                        <li><strong>Storage:</strong> Free storage in GB</li>
+                        <li><strong>Time-based:</strong> Hour of day, day of week</li>
+                    </ul>
+                    
+                    <h4>Tips:</h4>
+                    <ul>
+                        <li>✅ Start with 60-minute cooldown to avoid spam</li>
+                        <li>✅ Test rules with one device first</li>
+                        <li>✅ Combine multiple conditions with AND/OR logic</li>
+                        <li>✅ Review trigger history to optimize rules</li>
+                    </ul>
                 </div>
             </div>
             

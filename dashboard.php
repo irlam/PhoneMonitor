@@ -54,13 +54,22 @@ $devices = db()->fetchAll(
             <a href="/dashboard.php" class="active">Dashboard</a>
             <a href="/devices.php">All Devices</a>
             <a href="/geofences.php">Geofences</a>
+            <a href="/analytics.php">Analytics</a>
+            <a href="/alert_rules.php">Alert Rules</a>
             <a href="/setup.php">Setup & Help</a>
         </nav>
         
         <main class="main-content">
-            <div class="page-header">
-                <h2>Device Overview</h2>
-                <p class="subtitle">Monitor your family's devices with consent and transparency</p>
+                        <div class="page-header">
+                <h2>📊 Dashboard</h2>
+                <div class="header-actions">
+                    <a href="/export.php?type=devices_csv" class="btn btn-secondary" style="margin-right: 10px;">
+                        📊 Export Devices CSV
+                    </a>
+                    <a href="/analytics.php" class="btn btn-primary">
+                        📈 View Analytics
+                    </a>
+                </div>
             </div>
             
             <!-- Stats Cards -->
