@@ -165,10 +165,12 @@ $setupComplete = $status['database'] && $status['geofences_table'] && $status['n
         }
         
         .status-badge {
+            display: inline-block;
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
         }
         
         .status-ok { background: #22bb66; color: white; }
@@ -237,44 +239,44 @@ $setupComplete = $status['database'] && $status['geofences_table'] && $status['n
                     <h3 class="card-title">📊 System Status</h3>
                 </div>
                 <div class="card-body">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>Database:</strong> 
                             <span class="status-badge <?php echo $status['database'] ? 'status-ok' : 'status-error'; ?>">
                                 <?php echo $status['database'] ? '✓ Connected' : '✗ Not Connected'; ?>
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>Configuration File:</strong> 
                             <span class="status-badge <?php echo $status['env_file'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['env_file'] ? '✓ Exists' : '⚠ Missing'; ?>
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>Google Maps:</strong> 
                             <span class="status-badge <?php echo $status['google_maps'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['google_maps'] ? '✓ Configured' : '⚠ Not Set'; ?>
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>Email Alerts:</strong> 
                             <span class="status-badge <?php echo $status['admin_email'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['admin_email'] ? '✓ Configured' : '⚠ Not Set'; ?>
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>SMTP (optional):</strong> 
                             <span class="status-badge <?php echo $status['smtp_configured'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['smtp_configured'] ? '✓ Enabled' : '⚠ Not Enabled'; ?>
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>Geofences:</strong> 
                             <span class="status-badge <?php echo $status['geofences_table'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['geofences_table'] ? '✓ Ready' : '⚠ Not Installed'; ?>
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
                             <strong>Notifications:</strong> 
                             <span class="status-badge <?php echo $status['notifications_table'] ? 'status-ok' : 'status-warning'; ?>">
                                 <?php echo $status['notifications_table'] ? '✓ Ready' : '⚠ Not Installed'; ?>
