@@ -17,6 +17,8 @@ jobs:
   php-ci:
     name: PHP Quality Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
