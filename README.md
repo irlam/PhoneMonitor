@@ -8,7 +8,26 @@ PhoneMonitor is a simple, transparent system for families to share basic device 
 
 🌐 **Live Demo:** [https://phone-monitor.defecttracker.uk](https://phone-monitor.defecttracker.uk)
 
-## 🚀 Quick Navigation
+## � Table of Contents
+
+- [Quick Navigation](#-quick-navigation)
+- [Features](#-features)
+- [Setup & Help Wizard](#-setup--help-wizard)
+- [Analytics Dashboard](#-analytics-dashboard)
+- [CSV/PDF Export](#-csvpdf-export)
+- [Custom Alert Rules & Bot Alerts](#-custom-alert-rules--bot-alerts)
+- [Email (SMTP)](#-email-smtp)
+- [Favicon & App Icons](#-favicon--app-icons)
+- [Database & Migrations](#-database--migrations)
+- [Speed (mph) & UK Formats](#-speed-mph--uk-formats)
+- [Cron Jobs](#-cron-jobs)
+- [Mobile Build Guide](#-mobile-build-guide)
+- [Plesk Deployment Guide](#-plesk-deployment-guide)
+- [API Documentation](#-api-documentation)
+- [Troubleshooting](#-troubleshooting)
+- [Production Checklist](#-production-checklist)
+
+## �🚀 Quick Navigation
 
 - Dashboard: [`/dashboard.php`](./dashboard.php)
 - Devices: [`/devices.php`](./devices.php)
