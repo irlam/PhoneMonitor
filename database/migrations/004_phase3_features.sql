@@ -78,12 +78,30 @@ INSERT INTO alert_rules (name, device_id, rule_type, conditions, actions, enable
 ('Device Offline 24h', NULL, 'offline', '{"operator": "and", "rules": [{"field": "offline_hours", "operator": ">", "value": 24}]}', '{"email": true, "telegram": true, "discord": false}', TRUE, 1440),
 ('High Speed Alert', NULL, 'speed', '{"operator": "and", "rules": [{"field": "speed_kmh", "operator": ">", "value": 120}]}', '{"email": false, "telegram": true, "discord": false}', FALSE, 30);
 
--- Add column to devices table for speed tracking (if not exists)
-ALTER TABLE devices 
-ADD COLUMN IF NOT EXISTS last_speed DECIMAL(10,2) DEFAULT 0.0 COMMENT 'Last calculated speed in km/h';
+-- Add column to devices table for speed tracking (compat with MySQL 5.7+)
+SET @col_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'devices'
+        AND COLUMN_NAME = 'last_speed'
+);
+SET @sql := IF(@col_exists = 0,
+    'ALTER TABLE `devices` ADD COLUMN `last_speed` DECIMAL(10,2) NULL DEFAULT 0.0 COMMENT ''Last calculated speed in km/h'';',
+    'SELECT "devices.last_speed already exists";'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add column to device_locations for calculated speed (if not exists)
-ALTER TABLE device_locations
-ADD COLUMN IF NOT EXISTS speed DECIMAL(10,2) DEFAULT 0.0 COMMENT 'Speed in km/h calculated from previous location';
+-- Add column to device_locations for calculated speed (compat with MySQL 5.7+)
+SET @col2_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'device_locations'
+        AND COLUMN_NAME = 'speed'
+);
+SET @sql2 := IF(@col2_exists = 0,
+    'ALTER TABLE `device_locations` ADD COLUMN `speed` DECIMAL(10,2) NULL DEFAULT 0.0 COMMENT ''Speed in km/h calculated from previous location'';',
+    'SELECT "device_locations.speed already exists";'
+);
+PREPARE stmt2 FROM @sql2; EXECUTE stmt2; DEALLOCATE PREPARE stmt2;
 
 COMMIT;

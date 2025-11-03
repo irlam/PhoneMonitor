@@ -23,21 +23,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create' || $action === 'update') {
         $ruleId = $_POST['rule_id'] ?? null;
         $name = trim($_POST['name'] ?? '');
-        $deviceId = $_POST['device_id'] === 'all' ? null : (int)$_POST['device_id'];
+        // Use string device_id (not numeric id) to match devices.device_id
+        $deviceId = ($_POST['device_id'] === 'all') ? null : trim($_POST['device_id']);
         $ruleType = $_POST['rule_type'] ?? 'custom';
         $enabled = isset($_POST['enabled']);
         $cooldownMinutes = (int)($_POST['cooldown_minutes'] ?? 60);
         
         // Build conditions
         $conditions = [
-            'operator' => $_POST['condition_operator'] ?? 'AND',
-            'conditions' => []
+            // normalize to lowercase as used by service ('and'|'or')
+            'operator' => strtolower($_POST['condition_operator'] ?? 'and'),
+            'rules' => []
         ];
         
         if (!empty($_POST['condition_field'])) {
             foreach ($_POST['condition_field'] as $idx => $field) {
                 if (!empty($field) && isset($_POST['condition_operator_type'][$idx]) && isset($_POST['condition_value'][$idx])) {
-                    $conditions['conditions'][] = [
+                    $conditions['rules'][] = [
                         'field' => $field,
                         'operator' => $_POST['condition_operator_type'][$idx],
                         'value' => $_POST['condition_value'][$idx]
@@ -47,16 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Build actions
-        $actions = [];
-        if (isset($_POST['action_email'])) $actions[] = 'email';
-        if (isset($_POST['action_telegram'])) $actions[] = 'telegram';
-        if (isset($_POST['action_discord'])) $actions[] = 'discord';
+        $actions = [
+            'email' => isset($_POST['action_email']),
+            'telegram' => isset($_POST['action_telegram']),
+            'discord' => isset($_POST['action_discord'])
+        ];
         
         if (empty($name)) {
             $error = 'Rule name is required';
-        } elseif (empty($conditions['conditions'])) {
+        } elseif (empty($conditions['rules'])) {
             $error = 'At least one condition is required';
-        } elseif (empty($actions)) {
+        } elseif (!$actions['email'] && !$actions['telegram'] && !$actions['discord']) {
             $error = 'At least one action (email, telegram, or discord) is required';
         } else {
             try {
@@ -114,7 +117,7 @@ $rules = AlertRuleService::getAllRules();
 $recentTriggers = AlertRuleService::getRecentTriggers(20);
 
 // Get devices for dropdown
-$devices = db()->query("SELECT id, owner_name, display_name FROM devices WHERE consent_given = TRUE ORDER BY owner_name")->fetchAll();
+$devices = db()->query("SELECT device_id, owner_name, display_name FROM devices WHERE consent_given = TRUE ORDER BY owner_name")->fetchAll();
 
 // Get rule for editing
 $editRule = null;
@@ -287,8 +290,8 @@ if (isset($_GET['edit'])) {
                                 All Devices
                             </option>
                             <?php foreach ($devices as $device): ?>
-                                <option value="<?php echo $device['id']; ?>"
-                                        <?php echo ($editRule && $editRule['device_id'] == $device['id']) ? 'selected' : ''; ?>>
+                                <option value="<?php echo htmlspecialchars($device['device_id']); ?>"
+                                        <?php echo ($editRule && $editRule['device_id'] === $device['device_id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($device['owner_name']); ?>
                                     <?php if ($device['display_name']): ?>
                                         (<?php echo htmlspecialchars($device['display_name']); ?>)
@@ -311,17 +314,18 @@ if (isset($_GET['edit'])) {
                     <div class="form-group">
                         <label>Conditions *</label>
                         <select name="condition_operator" class="form-control" style="margin-bottom: 10px;">
-                            <option value="AND" <?php echo ($editRule && $editRule['conditions_array']['operator'] === 'AND') ? 'selected' : ''; ?>>
+                            <?php $op = $editRule ? strtolower($editRule['conditions_array']['operator'] ?? 'and') : 'and'; ?>
+                            <option value="and" <?php echo ($op === 'and') ? 'selected' : ''; ?>>
                                 Match ALL conditions (AND)
                             </option>
-                            <option value="OR" <?php echo ($editRule && $editRule['conditions_array']['operator'] === 'OR') ? 'selected' : ''; ?>>
+                            <option value="or" <?php echo ($op === 'or') ? 'selected' : ''; ?>>
                                 Match ANY condition (OR)
                             </option>
                         </select>
                         
                         <div id="conditions">
-                            <?php if ($editRule && !empty($editRule['conditions_array']['conditions'])): ?>
-                                <?php foreach ($editRule['conditions_array']['conditions'] as $idx => $cond): ?>
+                            <?php if ($editRule && !empty($editRule['conditions_array']['rules'])): ?>
+                                <?php foreach ($editRule['conditions_array']['rules'] as $idx => $cond): ?>
                                     <div class="condition-row">
                                         <select name="condition_field[]" class="form-control" required>
                                             <option value="">Select Field</option>
@@ -370,7 +374,7 @@ if (isset($_GET['edit'])) {
                                         <option value="<=">&lt;= Less or equal</option>
                                         <option value=">">&gt; Greater than</option>
                                         <option value=">=">&gt;= Greater or equal</option>
-                                        <option value="==">\== Equal to</option>
+                                        <option value="==">== Equal to</option>
                                         <option value="!=">!= Not equal to</option>
                                     </select>
                                     
@@ -391,17 +395,17 @@ if (isset($_GET['edit'])) {
                         <div class="checkbox-group">
                             <label>
                                 <input type="checkbox" name="action_email" value="1"
-                                       <?php echo ($editRule && in_array('email', $editRule['actions_array'])) ? 'checked' : 'checked'; ?>>
+                                       <?php echo ($editRule ? (!empty($editRule['actions_array']['email'])) : 'checked'); ?>>
                                 📧 Email
                             </label>
                             <label>
                                 <input type="checkbox" name="action_telegram" value="1"
-                                       <?php echo ($editRule && in_array('telegram', $editRule['actions_array'])) ? 'checked' : ''; ?>>
+                                       <?php echo ($editRule && !empty($editRule['actions_array']['telegram'])) ? 'checked' : ''; ?>>
                                 💬 Telegram
                             </label>
                             <label>
                                 <input type="checkbox" name="action_discord" value="1"
-                                       <?php echo ($editRule && in_array('discord', $editRule['actions_array'])) ? 'checked' : ''; ?>>
+                                       <?php echo ($editRule && !empty($editRule['actions_array']['discord'])) ? 'checked' : ''; ?>>
                                 💬 Discord
                             </label>
                         </div>
@@ -470,9 +474,9 @@ if (isset($_GET['edit'])) {
                                         <?php
                                         $actions = json_decode($rule['actions'], true);
                                         $actionLabels = [];
-                                        if (in_array('email', $actions)) $actionLabels[] = '📧';
-                                        if (in_array('telegram', $actions)) $actionLabels[] = '💬T';
-                                        if (in_array('discord', $actions)) $actionLabels[] = '💬D';
+                                        if (!empty($actions['email'])) $actionLabels[] = '📧';
+                                        if (!empty($actions['telegram'])) $actionLabels[] = '💬T';
+                                        if (!empty($actions['discord'])) $actionLabels[] = '💬D';
                                         echo implode(' ', $actionLabels);
                                         ?>
                                     </td>
