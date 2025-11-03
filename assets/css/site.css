@@ -668,75 +668,61 @@ body::before {
     font-weight: 500;
 }
 
-/* Stats Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 25px;
-    margin-bottom: 40px;
-}
-
-.stat-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--backdrop-blur);
-    -webkit-backdrop-filter: var(--backdrop-blur);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    padding: 25px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
+/* Enhanced Stats Cards */
+.stat-card-enhanced {
+    padding: 32px 24px;
+    text-align: center;
     transition: all 0.3s ease;
-    box-shadow: var(--shadow);
-    position: relative;
-    overflow: hidden;
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--gradient-primary);
+.stat-card-enhanced:hover {
+    transform: translateY(-8px) scale(1.02);
 }
 
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-hover);
-    border-color: rgba(34, 187, 102, 0.3);
-}
-
-.stat-icon {
-    font-size: 32px;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--gradient-primary);
-    border-radius: 12px;
-    color: white;
-}
-
-.stat-content {
-    flex: 1;
+.stat-icon-large {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
 }
 
 .stat-number {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
     color: var(--dark-text);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-label {
     font-size: 14px;
     color: var(--secondary-color);
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+}
+
+/* Override card animations for stats */
+.stat-card-enhanced:hover::before {
+    transform: scaleX(1);
+}
+
+/* Responsive adjustments for stats */
+@media (max-width: 768px) {
+    .stat-card-enhanced {
+        padding: 24px 16px;
+    }
+    
+    .stat-icon-large {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+    
+    .stat-number {
+        font-size: 28px;
+    }
 }
 
 /* Section Header */
