@@ -26,6 +26,7 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
+          # AGP 8.1+ requires JDK 17+ on the Gradle daemon host
           java-version: '17'
           distribution: 'temurin'
 
