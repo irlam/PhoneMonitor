@@ -13,23 +13,23 @@ on:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build Android APKs
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set up JDK 11
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
-      
+
       - name: Cache Gradle packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -37,30 +37,54 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      
+
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
         working-directory: ${{ github.workspace }}
-      
+
+      - name: Create Android debug keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v \
+              -keystore "$HOME/.android/debug.keystore" \
+              -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Build debug APK
         run: |
           cd android
           ./gradlew assembleDebug --stacktrace
-      
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+
+      - name: Build release APK (signed with debug keystore)
+        run: |
+          cd android
+          ./gradlew assembleRelease --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
-      
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
       - name: Build summary
         run: |
           echo "### Build Summary :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
-          echo "- **APK**: app-debug.apk" >> $GITHUB_STEP_SUMMARY
-          echo "- **Size**: $(du -h android/app/build/outputs/apk/debug/app-debug.apk | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Debug APK**: $(du -h android/app/build/outputs/apk/debug/app-debug.apk | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release APK**: $(du -h android/app/build/outputs/apk/release/app-release.apk | cut -f1)" >> $GITHUB_STEP_SUMMARY
 
   codeql:
     name: CodeQL Security Scan
@@ -69,28 +93,28 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: 'java'
           queries: security-and-quality
-      
-      - name: Set up JDK 11
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
-      
+
       - name: Build with Gradle
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-      
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
