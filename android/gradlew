@@ -155,7 +155,14 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
     esac
 fi
 
-# Collect all arguments for the java command, following the shell quoting and substitution rules
-eval set -- $DEFAULT_JVM_OPTS '"$JAVA_OPTS"' '"$GRADLE_OPTS"' '"-Dorg.gradle.appname=$APP_BASE_NAME"' -classpath '"$CLASSPATH"' org.gradle.wrapper.GradleWrapperMain '"$@"'
+# Collect all arguments for the java command, following the shell quoting and substitution rules.
+# JAVA_OPTS and GRADLE_OPTS are included only when non-empty; passing empty-string arguments
+# causes Java 17+ to misidentify them as the main class name (ClassNotFoundException: "").
+_jvmArgs=$DEFAULT_JVM_OPTS
+[ -n "$JAVA_OPTS" ] && _jvmArgs="$_jvmArgs \"$JAVA_OPTS\""
+[ -n "$GRADLE_OPTS" ] && _jvmArgs="$_jvmArgs \"$GRADLE_OPTS\""
+# shellcheck disable=SC2086
+eval set -- $_jvmArgs '"-Dorg.gradle.appname=$APP_BASE_NAME"' -classpath '"$CLASSPATH"' org.gradle.wrapper.GradleWrapperMain '"$@"'
+unset _jvmArgs
 
 exec "$JAVACMD" "$@"
