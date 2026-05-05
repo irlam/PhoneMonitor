@@ -50,6 +50,13 @@
             android:exported="false"
             android:parentActivityName=".ui.ConsentActivity" />
 
+        <!-- WorkManager's SystemForegroundService – must declare foregroundServiceType
+             to match the FOREGROUND_SERVICE_TYPE_LOCATION used in HeartbeatWorker. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="location"
+            tools:node="merge" />
+
         <!-- WorkManager for background heartbeat -->
         <provider
             android:name="androidx.startup.InitializationProvider"
