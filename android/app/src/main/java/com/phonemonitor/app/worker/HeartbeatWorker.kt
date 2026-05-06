@@ -1,13 +1,16 @@
 package com.phonemonitor.app.worker
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.work.*
 import com.phonemonitor.app.PhoneMonitorApp
 import com.phonemonitor.app.R
@@ -144,11 +147,25 @@ class HeartbeatWorker(
             .build()
         
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(
-                NOTIFICATION_ID,
-                notification,
+            // On Android 10+ a foreground service type must be declared.
+            // FOREGROUND_SERVICE_TYPE_LOCATION requires location permission to be
+            // granted at runtime (enforced strictly on Android 14+).  Fall back to
+            // DATA_SYNC when the user has not granted location permission so the
+            // worker never throws a SecurityException.
+            val hasLocationPermission = ContextCompat.checkSelfPermission(
+                applicationContext, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val serviceType = if (hasLocationPermission) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-            )
+            } else {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            }
+
+            ForegroundInfo(NOTIFICATION_ID, notification, serviceType)
         } else {
             ForegroundInfo(NOTIFICATION_ID, notification)
         }
