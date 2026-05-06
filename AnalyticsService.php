@@ -105,8 +105,8 @@ class AnalyticsService {
             SELECT 
                 DATE(last_seen) as date,
                 d.id as device_id,
-                d.owner_name,
-                d.display_name,
+                ANY_VALUE(d.owner_name) as owner_name,
+                ANY_VALUE(d.display_name) as display_name,
                 AVG(d.battery_level) as avg_battery,
                 MIN(d.battery_level) as min_battery,
                 MAX(d.battery_level) as max_battery
@@ -122,7 +122,7 @@ class AnalyticsService {
             $params[] = $deviceId;
         }
         
-        $sql .= " GROUP BY DATE(d.last_seen), d.id, d.owner_name, d.display_name ORDER BY date ASC";
+        $sql .= " GROUP BY DATE(d.last_seen), d.id ORDER BY date ASC";
         
         $data = db()->fetchAll($sql, $params);
         

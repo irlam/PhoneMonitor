@@ -262,11 +262,14 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
                                         if ($diffSec < 60) {
                                             $relText = 'just now';
                                         } elseif ($diffSec < 3600) {
-                                            $relText = floor($diffSec / 60) . ' min ago';
+                                            $mins = floor($diffSec / 60);
+                                            $relText = $mins . ' ' . ($mins === 1 ? 'min' : 'mins') . ' ago';
                                         } elseif ($diffSec < 86400) {
-                                            $relText = floor($diffSec / 3600) . ' hours ago';
+                                            $hrs = floor($diffSec / 3600);
+                                            $relText = $hrs . ' ' . ($hrs === 1 ? 'hour' : 'hours') . ' ago';
                                         } else {
-                                            $relText = floor($diffSec / 86400) . ' days ago';
+                                            $days = floor($diffSec / 86400);
+                                            $relText = $days . ' ' . ($days === 1 ? 'day' : 'days') . ' ago';
                                         }
                                         echo date('d/m/Y H:i', $lastSeenTs) . '<br><small style="color:#95a5a6;">' . $relText . '</small>';
                                     } else {

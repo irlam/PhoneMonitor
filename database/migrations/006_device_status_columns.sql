@@ -40,5 +40,3 @@ SET @sql_updated := IF(@col_updated = 0,
     'SELECT "devices.updated_at already exists";'
 );
 PREPARE stmt_updated FROM @sql_updated; EXECUTE stmt_updated; DEALLOCATE PREPARE stmt_updated;
-
-COMMIT;
