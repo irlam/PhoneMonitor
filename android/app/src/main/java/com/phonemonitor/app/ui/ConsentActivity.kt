@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -154,11 +155,12 @@ class ConsentActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(
-                    this@ConsentActivity,
-                    "Network error: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                val errorMsg = "${e.javaClass.name}: ${e.message}"
+                AlertDialog.Builder(this@ConsentActivity)
+                    .setTitle("Network Error")
+                    .setMessage(errorMsg)
+                    .setPositiveButton("OK", null)
+                    .show()
             }
         }
     }
