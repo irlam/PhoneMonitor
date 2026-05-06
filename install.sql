@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS devices (
     last_payload JSON NULL,
     consent_given TINYINT(1) DEFAULT 0,
     revoked TINYINT(1) DEFAULT 0,
+    battery_level INT NULL COMMENT 'Last reported battery percentage (0-100)',
+    storage_free BIGINT NULL COMMENT 'Last reported free storage in bytes',
+    updated_at TIMESTAMP NULL COMMENT 'Timestamp of last ping update',
     INDEX idx_device_uuid (device_uuid),
     INDEX idx_last_seen (last_seen),
     INDEX idx_revoked (revoked)

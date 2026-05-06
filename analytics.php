@@ -141,6 +141,7 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
                     <a href="/export.php?type=devices_csv" class="btn btn-secondary">Export Devices CSV</a>
                     <a href="/export.php?type=battery_csv" class="btn btn-secondary">Export Battery CSV</a>
                     <a href="/analytics.php?clear_cache=1" class="btn btn-primary">Clear Cache</a>
+                    <a href="/analytics.php" class="btn btn-secondary" id="refreshNowBtn">🔄 Refresh Now</a>
                 </div>
             </div>
             
@@ -238,12 +239,41 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span style="color: <?php echo $device['battery_level'] < 20 ? '#e74c3c' : '#2ecc71'; ?>">
-                                        <?php echo $device['battery_level']; ?>%
-                                    </span>
+                                    <?php if ($device['battery_level'] === null): ?>
+                                        <span style="color: #95a5a6;">No data yet</span>
+                                    <?php else: ?>
+                                        <span style="color: <?php echo $device['battery_level'] < 20 ? '#e74c3c' : '#2ecc71'; ?>">
+                                            <?php echo $device['battery_level']; ?>%
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
-                                <td><?php echo round($device['storage_free'] / 1073741824, 2); ?> GB</td>
-                                <td><?php echo date('d/m/Y H:i', strtotime($device['last_seen'])); ?></td>
+                                <td>
+                                    <?php if ($device['storage_free'] === null): ?>
+                                        <span style="color: #95a5a6;">No data yet</span>
+                                    <?php else: ?>
+                                        <?php echo round($device['storage_free'] / 1073741824, 2); ?> GB
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $lastSeenTs = $device['last_seen'] ? strtotime($device['last_seen']) : 0;
+                                    if ($lastSeenTs > 0) {
+                                        $diffSec = time() - $lastSeenTs;
+                                        if ($diffSec < 60) {
+                                            $relText = 'just now';
+                                        } elseif ($diffSec < 3600) {
+                                            $relText = floor($diffSec / 60) . ' min ago';
+                                        } elseif ($diffSec < 86400) {
+                                            $relText = floor($diffSec / 3600) . ' hours ago';
+                                        } else {
+                                            $relText = floor($diffSec / 86400) . ' days ago';
+                                        }
+                                        echo date('d/m/Y H:i', $lastSeenTs) . '<br><small style="color:#95a5a6;">' . $relText . '</small>';
+                                    } else {
+                                        echo '<span style="color:#95a5a6;">Never</span>';
+                                    }
+                                    ?>
+                                </td>
                                 <td><?php echo $device['weekly_updates']; ?></td>
                                 <td><?php echo $device['weekly_events']; ?></td>
                                 <td>
@@ -304,7 +334,7 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
         
         <footer class="footer">
             <p>PhoneMonitor - Analytics Dashboard</p>
-            <p><small>Data refreshes every 5-15 minutes via cache</small></p>
+            <p><small>Data refreshes every 60 seconds · <a href="/analytics.php">Refresh Now</a></small></p>
         </footer>
     </div>
     
@@ -334,14 +364,20 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
     // Battery Trends Chart
     const batteryData = <?php echo json_encode($batteryTrends); ?>;
     const batteryDates = [...new Set(batteryData.map(d => d.date))];
-    const batteryDevices = [...new Set(batteryData.map(d => d.device_id))];
+    const batteryDeviceIds = [...new Set(batteryData.map(d => d.device_id))];
     
-    const batteryDatasets = batteryDevices.map((deviceId, index) => {
+    const batteryDatasets = batteryDeviceIds.map((deviceId, index) => {
         const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
         const deviceData = batteryData.filter(d => d.device_id === deviceId);
+        // Use first matching record for label
+        const info = deviceData[0] || {};
+        const ownerName = info.owner_name || '';
+        const displayName = info.display_name || '';
+        const label = ownerName && displayName ? ownerName + ' - ' + displayName
+                    : ownerName || displayName || ('Device ' + deviceId);
         
         return {
-            label: deviceId,
+            label: label,
             data: batteryDates.map(date => {
                 const item = deviceData.find(d => d.date === date);
                 return item ? parseFloat(item.avg_battery) : null;
@@ -500,8 +536,8 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
         location.reload();
     }
     
-    // Auto-refresh every 5 minutes
-    setTimeout(() => location.reload(), 5 * 60 * 1000);
+    // Auto-refresh every 60 seconds
+    setTimeout(() => location.reload(), 60 * 1000);
     </script>
 </body>
 </html>

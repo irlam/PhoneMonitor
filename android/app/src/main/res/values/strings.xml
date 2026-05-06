@@ -19,6 +19,7 @@
     <!-- Main Activity -->
     <string name="sharing_active">Family Sharing Active</string>
     <string name="settings">Settings</string>
+    <string name="send_update_now">🔄 Send Update Now</string>
     
     <!-- Labels -->
     <string name="server_url">Server URL</string>
