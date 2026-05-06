@@ -81,11 +81,24 @@ try {
     
     // Build payload
     $payload = [];
+    $batteryLevel = null;
+    $storageFree = null;
+
     if (isset($input['battery'])) {
-        $payload['battery'] = intval($input['battery']);
+        $b = intval($input['battery']);
+        // Clamp to valid range 0-100
+        if ($b >= 0 && $b <= 100) {
+            $batteryLevel = $b;
+        }
+        $payload['battery'] = $b;
     }
     if (isset($input['free_storage'])) {
-        $payload['free_storage'] = floatval($input['free_storage']);
+        // Android sends free_storage in GB (float); convert to bytes for storage
+        $gbValue = floatval($input['free_storage']);
+        if ($gbValue >= 0) {
+            $storageFree = (int)round($gbValue * 1073741824);
+        }
+        $payload['free_storage'] = $gbValue;
     }
     if (isset($input['note'])) {
         $payload['note'] = substr(trim($input['note']), 0, 500);
@@ -132,10 +145,24 @@ try {
     
     $payloadJson = !empty($payload) ? json_encode($payload) : null;
     
+    // Build device update query - write battery_level/storage_free/updated_at directly
+    $updateFields = "last_seen = NOW(), updated_at = NOW(), last_payload = ?";
+    $updateParams = [$payloadJson];
+
+    if ($batteryLevel !== null) {
+        $updateFields .= ", battery_level = ?";
+        $updateParams[] = $batteryLevel;
+    }
+    if ($storageFree !== null) {
+        $updateFields .= ", storage_free = ?";
+        $updateParams[] = $storageFree;
+    }
+    $updateParams[] = $deviceId;
+
     // Update device
     db()->query(
-        "UPDATE devices SET last_seen = NOW(), last_payload = ? WHERE id = ?",
-        [$payloadJson, $deviceId]
+        "UPDATE devices SET $updateFields WHERE id = ?",
+        $updateParams
     );
     
     // Store location in separate table if provided
@@ -150,8 +177,8 @@ try {
     }
     
     // Check for low battery alert (below 15%)
-    if (isset($payload['battery']) && $payload['battery'] < 15) {
-        NotificationService::sendLowBatteryAlert($deviceId, $payload['battery']);
+    if ($batteryLevel !== null && $batteryLevel < 15) {
+        NotificationService::sendLowBatteryAlert($deviceId, $batteryLevel);
     }
     
     http_response_code(200);

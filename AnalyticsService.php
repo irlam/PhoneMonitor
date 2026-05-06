@@ -69,9 +69,11 @@ class AnalyticsService {
                 $stats['offline_devices']++;
             }
             
-            $batteryLevels[] = $device['battery_level'];
-            if ($device['battery_level'] < 20) {
-                $stats['low_battery_count']++;
+            if ($device['battery_level'] !== null) {
+                $batteryLevels[] = $device['battery_level'];
+                if ($device['battery_level'] < 20) {
+                    $stats['low_battery_count']++;
+                }
             }
         }
         
@@ -82,7 +84,7 @@ class AnalyticsService {
         
         $todayCount = db()->fetchOne("
             SELECT COUNT(*) as count FROM device_locations 
-            WHERE DATE(timestamp) = CURDATE()
+            WHERE DATE(created_at) = CURDATE()
         ");
         $stats['locations_today'] = $todayCount['count'];
         
@@ -98,26 +100,29 @@ class AnalyticsService {
         $cached = self::getCache($cacheKey);
         if ($cached) return $cached;
         
-        // Get daily averages
+        // Get daily averages per device using dedicated columns
         $sql = "
             SELECT 
                 DATE(last_seen) as date,
-                device_id,
-                AVG(battery_level) as avg_battery,
-                MIN(battery_level) as min_battery,
-                MAX(battery_level) as max_battery
-            FROM devices
-            WHERE last_seen >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                d.id as device_id,
+                ANY_VALUE(d.owner_name) as owner_name,
+                ANY_VALUE(d.display_name) as display_name,
+                AVG(d.battery_level) as avg_battery,
+                MIN(d.battery_level) as min_battery,
+                MAX(d.battery_level) as max_battery
+            FROM devices d
+            WHERE d.last_seen >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            AND d.battery_level IS NOT NULL
         ";
         
         $params = [$days];
         
         if ($deviceId) {
-            $sql .= " AND device_id = ?";
+            $sql .= " AND d.id = ?";
             $params[] = $deviceId;
         }
         
-        $sql .= " GROUP BY DATE(last_seen), device_id ORDER BY date ASC";
+        $sql .= " GROUP BY DATE(d.last_seen), d.id ORDER BY date ASC";
         
         $data = db()->fetchAll($sql, $params);
         
@@ -135,11 +140,11 @@ class AnalyticsService {
         
         $sql = "
             SELECT 
-                DATE(timestamp) as date,
-                HOUR(timestamp) as hour,
+                DATE(created_at) as date,
+                HOUR(created_at) as hour,
                 COUNT(*) as location_count
             FROM device_locations
-            WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? DAY)
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
         ";
         
         $params = [$days];
@@ -149,7 +154,7 @@ class AnalyticsService {
             $params[] = $deviceId;
         }
         
-        $sql .= " GROUP BY DATE(timestamp), HOUR(timestamp) ORDER BY date, hour";
+        $sql .= " GROUP BY DATE(created_at), HOUR(created_at) ORDER BY date, hour";
         
         $data = db()->fetchAll($sql, $params);
         
@@ -166,12 +171,12 @@ class AnalyticsService {
         if ($cached) return $cached;
         
         $data = db()->fetchAll("
-            SELECT latitude, longitude, accuracy
+            SELECT lat, lon, accuracy
             FROM device_locations
             WHERE device_id = ?
-            AND timestamp >= DATE_SUB(NOW(), INTERVAL ? DAY)
+            AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
             AND accuracy < 100
-            ORDER BY timestamp DESC
+            ORDER BY created_at DESC
             LIMIT 1000
         ", [$deviceId, $days]);
         
@@ -189,15 +194,15 @@ class AnalyticsService {
         
         $devices = db()->fetchAll("
             SELECT 
-                d.device_id,
+                d.id as device_id,
                 d.owner_name,
                 d.display_name,
                 d.battery_level,
                 d.storage_free,
                 d.last_seen,
                 d.consent_given,
-                (SELECT COUNT(*) FROM device_locations WHERE device_id = d.device_id AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as weekly_updates,
-                (SELECT COUNT(*) FROM geofence_events WHERE device_id = d.device_id AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as weekly_events
+                (SELECT COUNT(*) FROM device_locations WHERE device_id = d.id AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as weekly_updates,
+                (SELECT COUNT(*) FROM geofence_events WHERE device_id = d.id AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as weekly_events
             FROM devices d
             ORDER BY d.owner_name
         ");
@@ -221,10 +226,10 @@ class AnalyticsService {
                 COUNT(ge.id) as total_events,
                 SUM(CASE WHEN ge.event_type = 'enter' THEN 1 ELSE 0 END) as enter_count,
                 SUM(CASE WHEN ge.event_type = 'exit' THEN 1 ELSE 0 END) as exit_count,
-                MAX(ge.timestamp) as last_event
+                MAX(ge.created_at) as last_event
             FROM geofences g
             LEFT JOIN geofence_events ge ON g.id = ge.geofence_id
-            AND ge.timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND ge.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             GROUP BY g.id, g.name
             ORDER BY total_events DESC
         ");
@@ -287,6 +292,6 @@ class AnalyticsService {
      * Clear all analytics cache
      */
     public static function clearCache() {
-        db()->query("DELETE FROM analytics_cache WHERE expires_at < NOW()");
+        db()->query("DELETE FROM analytics_cache");
     }
 }
