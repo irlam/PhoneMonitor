@@ -10,6 +10,7 @@ on:
     branches: [ master, main ]
     paths:
       - 'android/**'
+      - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
 jobs:
@@ -17,7 +18,7 @@ jobs:
     name: Build Android APKs
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -89,6 +90,20 @@ jobs:
           echo "- **Build Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
           echo "- **Debug APK**: $(du -h android/app/build/outputs/apk/debug/app-debug.apk | cut -f1)" >> $GITHUB_STEP_SUMMARY
           echo "- **Release APK**: $(du -h android/app/build/outputs/apk/release/app-release.apk | cut -f1)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit updated APK to repository
+        run: |
+          if [ ! -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            echo "Release APK not found, skipping commit step"
+            exit 1
+          fi
+          cp android/app/build/outputs/apk/release/app-release.apk PhoneMonitor.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add PhoneMonitor.apk
+          git diff --cached --quiet || git commit -m "chore: rebuild PhoneMonitor.apk from ${GITHUB_SHA:0:7} [skip ci]"
+          BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}
+          git push origin HEAD:"${BRANCH}"
 
   codeql:
     name: CodeQL Security Scan

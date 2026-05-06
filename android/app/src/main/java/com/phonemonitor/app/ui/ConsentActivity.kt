@@ -1,13 +1,18 @@
 package com.phonemonitor.app.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.phonemonitor.app.R
 import com.phonemonitor.app.data.DevicePreferences
@@ -21,13 +26,22 @@ import kotlinx.coroutines.withContext
 class ConsentActivity : AppCompatActivity() {
     
     private lateinit var prefs: DevicePreferences
+
+    // Launcher to request POST_NOTIFICATIONS permission (Android 13+).
+    // Registration proceeds regardless of whether the user grants the permission.
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        // Permission result received – proceed with registration unconditionally.
+        registerDevice()
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         prefs = DevicePreferences(this)
         
-        // If already consented, go to main activity
+        // If already consented and registered, go to main activity
         if (prefs.consentGiven) {
             startMainActivity()
             return
@@ -79,14 +93,23 @@ class ConsentActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             
-            // Save preferences
+            // Save form values (but NOT consentGiven yet – that is set only after the
+            // server confirms the device was registered successfully).
             prefs.serverUrl = serverUrl
             prefs.displayName = displayName
             prefs.ownerName = ownerName
-            prefs.consentGiven = true
-            
-            // Register device
-            registerDevice()
+
+            // On Android 13+ request POST_NOTIFICATIONS so the persistent heartbeat
+            // notification is visible.  Registration proceeds regardless of the result.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                // Register device
+                registerDevice()
+            }
         }
         
         declineButton.setOnClickListener {
@@ -110,6 +133,11 @@ class ConsentActivity : AppCompatActivity() {
                 }
                 
                 if (response.isSuccessful && response.body()?.success == true) {
+                    // Mark consent as given only after the server confirms registration.
+                    // This ensures the app re-attempts registration if a previous attempt
+                    // failed (network error, server error, etc.).
+                    prefs.consentGiven = true
+
                     // Schedule heartbeat worker
                     HeartbeatWorker.schedule(this@ConsentActivity, prefs.heartbeatInterval)
                     
