@@ -46,3 +46,24 @@
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
 -keep class com.phonemonitor.app.worker.** { *; }
+
+# Kotlin coroutines – required so that R8 does not strip Continuation and
+# related classes that Retrofit uses at runtime for suspend functions.
+# allowobfuscation+allowshrinking lets R8 still optimise within the package.
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.** { *; }
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+# keepclasseswithmembers ensures the enclosing class is kept when it has
+# volatile fields, making the rule effective without a separate class keep.
+-keepclasseswithmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+-keepclassmembers class kotlin.coroutines.SafeContinuation {
+    volatile <fields>;
+}
+-dontwarn kotlinx.coroutines.**
+
+# Retrofit suspend-function support requires Continuation to survive R8
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
