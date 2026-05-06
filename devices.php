@@ -1,6 +1,7 @@
 <?php
 /**
- * All Devices Page
+ * File: devices.php
+ * Description: Displays all registered devices and lets admins revoke active devices or permanently delete revoked devices.
  */
 
 require_once __DIR__ . '/config.php';
@@ -12,23 +13,42 @@ Auth::require();
 
 $message = '';
 
-// Handle device revocation
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'revoke') {
+// Handle device actions (revoke / delete)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (!CSRF::validateToken()) {
         $message = ['type' => 'error', 'text' => 'Invalid request'];
     } else {
+        $action = $_POST['action'] ?? '';
         $deviceId = intval($_POST['device_id'] ?? 0);
-        
-        try {
-            db()->query(
-                "UPDATE devices SET revoked = 1 WHERE id = ?",
-                [$deviceId]
-            );
-            
-            Auth::logAction('device_revoked', $deviceId);
-            $message = ['type' => 'success', 'text' => 'Device revoked successfully'];
-        } catch (Exception $e) {
-            $message = ['type' => 'error', 'text' => 'Failed to revoke device'];
+
+        if ($deviceId <= 0) {
+            $message = ['type' => 'error', 'text' => 'Invalid device selected'];
+        } else {
+            try {
+                if ($action === 'revoke') {
+                    db()->query(
+                        "UPDATE devices SET revoked = 1 WHERE id = ?",
+                        [$deviceId]
+                    );
+
+                    Auth::logAction('device_revoked', $deviceId);
+                    $message = ['type' => 'success', 'text' => 'Device revoked successfully'];
+                } elseif ($action === 'delete_revoked') {
+                    $deleted = db()->query(
+                        "DELETE FROM devices WHERE id = ? AND revoked = 1",
+                        [$deviceId]
+                    );
+
+                    if ($deleted && $deleted->rowCount() > 0) {
+                        Auth::logAction('device_deleted', $deviceId);
+                        $message = ['type' => 'success', 'text' => 'Revoked device removed permanently'];
+                    } else {
+                        $message = ['type' => 'error', 'text' => 'Only revoked devices can be removed'];
+                    }
+                }
+            } catch (Exception $e) {
+                $message = ['type' => 'error', 'text' => 'Action failed. Please try again'];
+            }
         }
     }
 }
@@ -143,6 +163,7 @@ $devices = db()->fetchAll(
                                     </td>
                                     <td>
                                         <a href="/device_view.php?id=<?php echo $device['id']; ?>" class="btn btn-sm btn-primary">View</a>
+
                                         <?php if (!$device['revoked']): ?>
                                             <form method="POST" style="display: inline;" 
                                                   onsubmit="return confirm('Are you sure you want to revoke this device?');">
@@ -150,6 +171,14 @@ $devices = db()->fetchAll(
                                                 <input type="hidden" name="action" value="revoke">
                                                 <input type="hidden" name="device_id" value="<?php echo $device['id']; ?>">
                                                 <button type="submit" class="btn btn-sm btn-danger">Revoke</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <form method="POST" style="display: inline;" 
+                                                  onsubmit="return confirm('This will permanently delete the revoked device. Continue?');">
+                                                <?php CSRF::field(); ?>
+                                                <input type="hidden" name="action" value="delete_revoked">
+                                                <input type="hidden" name="device_id" value="<?php echo $device['id']; ?>">
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete Permanently</button>
                                             </form>
                                         <?php endif; ?>
                                     </td>
