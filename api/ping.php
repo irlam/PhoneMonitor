@@ -61,7 +61,7 @@ if (empty($deviceUuid)) {
 try {
     // Find device
     $device = db()->fetchOne(
-        "SELECT id, revoked FROM devices WHERE device_uuid = ? LIMIT 1",
+        "SELECT id, revoked, pending_refresh FROM devices WHERE device_uuid = ? LIMIT 1",
         [$deviceUuid]
     );
     
@@ -146,7 +146,7 @@ try {
     $payloadJson = !empty($payload) ? json_encode($payload) : null;
     
     // Build device update query - write battery_level/storage_free/updated_at directly
-    $updateFields = "last_seen = NOW(), updated_at = NOW(), last_payload = ?";
+    $updateFields = "last_seen = NOW(), updated_at = NOW(), last_payload = ?, pending_refresh = 0";
     $updateParams = [$payloadJson];
 
     if ($batteryLevel !== null) {
@@ -182,11 +182,15 @@ try {
     }
     
     http_response_code(200);
-    echo json_encode([
+    $responseData = [
         'success' => true,
         'message' => 'Ping received',
         'timestamp' => date('c')
-    ]);
+    ];
+    if (!empty($device['pending_refresh'])) {
+        $responseData['refresh'] = true;
+    }
+    echo json_encode($responseData);
 } catch (Exception $e) {
     error_log("Ping API error: " . $e->getMessage());
     http_response_code(500);

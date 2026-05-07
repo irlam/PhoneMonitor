@@ -170,6 +170,9 @@ if (!empty($rowSpeedsMph)) {
             <div class="page-header">
                 <h2><?php echo htmlspecialchars($device['display_name']); ?></h2>
                 <div class="header-actions">
+                    <button id="requestUpdateBtn" class="btn btn-primary" onclick="requestDeviceUpdate()" style="margin-right: 10px;" title="Ask the device to send fresh status data immediately">
+                        🔄 Request Update
+                    </button>
                     <a href="/export.php?type=locations_csv&device_id=<?php echo urlencode($device['device_id']); ?>&days=<?php echo $filterDays; ?>" class="btn btn-secondary" style="margin-right: 10px;">
                         📊 Export Locations CSV
                     </a>
@@ -178,6 +181,8 @@ if (!empty($rowSpeedsMph)) {
                     </a>
                 </div>
             </div>
+            
+            <div id="updateMsg" style="display:none; margin-bottom:15px;"></div>
             
             <div style="margin-bottom: 20px;">
                 <?php if ($device['revoked']): ?>
@@ -420,7 +425,39 @@ if (!empty($rowSpeedsMph)) {
         document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
     }
     
-    // Load dark mode preference
+    // Request device update
+    function requestDeviceUpdate() {
+        const btn = document.getElementById('requestUpdateBtn');
+        const msg = document.getElementById('updateMsg');
+        btn.disabled = true;
+        btn.textContent = '⏳ Requesting…';
+        fetch('/api/request_update.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({device_id: <?php echo (int)$device['id']; ?>})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                msg.className = 'alert alert-success';
+                msg.textContent = '✅ ' + data.message;
+            } else {
+                msg.className = 'alert alert-danger';
+                msg.textContent = '❌ ' + (data.error || 'Unknown error');
+            }
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '🔄 Request Update';
+        })
+        .catch(() => {
+            msg.className = 'alert alert-danger';
+            msg.textContent = '❌ Failed to send request. Please try again.';
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '🔄 Request Update';
+        });
+    }
+    
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-icon').textContent = '☀️';

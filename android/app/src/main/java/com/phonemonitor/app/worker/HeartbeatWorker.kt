@@ -110,6 +110,15 @@ class HeartbeatWorker(
             val response = apiService.ping(request)
             
             if (response.isSuccessful && response.body()?.success == true) {
+                if (response.body()?.refresh == true) {
+                    // Server requested an immediate follow-up ping; send one now
+                    try {
+                        apiService.ping(request)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // Follow-up ping failed; the original ping already succeeded
+                    }
+                }
                 Result.success()
             } else {
                 Result.retry()
