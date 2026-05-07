@@ -32,5 +32,6 @@ data class ApiResponse(
     @SerializedName("message") val message: String?,
     @SerializedName("error") val error: String?,
     @SerializedName("device_id") val deviceId: Int?,
-    @SerializedName("timestamp") val timestamp: String?
+    @SerializedName("timestamp") val timestamp: String?,
+    @SerializedName("refresh") val refresh: Boolean?
 )

@@ -63,7 +63,7 @@ class AnalyticsService {
         foreach ($devices as $device) {
             if (!$device['consent_given']) {
                 $stats['revoked_devices']++;
-            } elseif (strtotime($device['last_seen']) > time() - 1800) {
+            } elseif ($device['last_seen'] && strtotime($device['last_seen']) > time() - 1800) {
                 $stats['online_devices']++;
             } else {
                 $stats['offline_devices']++;

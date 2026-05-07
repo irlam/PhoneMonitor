@@ -282,7 +282,7 @@ $activityTimeline = AnalyticsService::getActivityTimeline(null, 7);
                                 <td>
                                     <?php if (!$device['consent_given']): ?>
                                         <span class="badge badge-danger">Revoked</span>
-                                    <?php elseif (strtotime($device['last_seen']) > time() - 1800): ?>
+                                    <?php elseif ($device['last_seen'] && strtotime($device['last_seen']) > time() - 1800): ?>
                                         <span class="badge badge-success">Online</span>
                                     <?php else: ?>
                                         <span class="badge badge-secondary">Offline</span>
