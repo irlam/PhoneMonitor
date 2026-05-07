@@ -112,7 +112,12 @@ class HeartbeatWorker(
             if (response.isSuccessful && response.body()?.success == true) {
                 if (response.body()?.refresh == true) {
                     // Server requested an immediate follow-up ping; send one now
-                    apiService.ping(request)
+                    try {
+                        apiService.ping(request)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // Follow-up ping failed; the original ping already succeeded
+                    }
                 }
                 Result.success()
             } else {

@@ -53,7 +53,7 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Update request sent to device. The device will send fresh data on its next check-in.',
+        'message' => 'Update request queued. The device will send fresh data when it next contacts the server (within the heartbeat interval).',
     ]);
 } catch (Exception $e) {
     error_log("Request update API error: " . $e->getMessage());
